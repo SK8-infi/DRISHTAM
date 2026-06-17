@@ -199,6 +199,82 @@ CO2_PER_IDLE_HOUR_KG = IDLE_FUEL_CONSUMPTION_L_PER_HOUR * CO2_PER_LITER_PETROL_K
 CO2_ABSORBED_PER_TREE_PER_YEAR_KG = 22.0  # Average mature tree
 
 # =============================================================================
+# TRAFFIC FLOW ESTIMATES (vehicles/hour by road tier)
+# Reference: IRC SP:41-1994 guidelines + Bengaluru BTP estimates
+# =============================================================================
+TRAFFIC_FLOW_ESTIMATES: dict[str, dict[str, int]] = {
+    # tier_name: {peak_vph, offpeak_vph}
+    "Expressway": {"peak": 2000, "offpeak": 800},
+    "Expressway Ramp": {"peak": 600, "offpeak": 250},
+    "Arterial": {"peak": 1200, "offpeak": 500},
+    "Arterial Ramp": {"peak": 400, "offpeak": 150},
+    "Primary": {"peak": 800, "offpeak": 350},
+    "Primary Ramp": {"peak": 300, "offpeak": 120},
+    "Secondary": {"peak": 500, "offpeak": 200},
+    "Secondary Ramp": {"peak": 200, "offpeak": 80},
+    "Tertiary": {"peak": 300, "offpeak": 120},
+    "Tertiary Ramp": {"peak": 150, "offpeak": 60},
+    "Residential": {"peak": 100, "offpeak": 40},
+    "Living Street": {"peak": 30, "offpeak": 15},
+    "Unclassified": {"peak": 100, "offpeak": 40},
+    "Service": {"peak": 20, "offpeak": 10},
+    "Other": {"peak": 100, "offpeak": 40},
+}
+DELAY_FACTOR_PER_PIS = 0.003  # Each PIS point → 0.3% effective capacity reduction
+
+# =============================================================================
+# HDBSCAN CLUSTERING PARAMETERS
+# =============================================================================
+HDBSCAN_MIN_CLUSTER_SIZE = 50
+HDBSCAN_MIN_SAMPLES = 10
+
+# =============================================================================
+# WEIGHT SENSITIVITY CONFIGURATIONS
+# =============================================================================
+WEIGHT_CONFIGS: dict[str, dict[str, float]] = {
+    "default": {
+        "capacity": 0.30,
+        "importance": 0.20,
+        "junction": 0.15,
+        "temporal": 0.15,
+        "density": 0.10,
+        "severity": 0.10,
+    },
+    "capacity_heavy": {
+        "capacity": 0.50,
+        "importance": 0.15,
+        "junction": 0.10,
+        "temporal": 0.10,
+        "density": 0.10,
+        "severity": 0.05,
+    },
+    "location_heavy": {
+        "capacity": 0.20,
+        "importance": 0.30,
+        "junction": 0.25,
+        "temporal": 0.10,
+        "density": 0.10,
+        "severity": 0.05,
+    },
+    "temporal_heavy": {
+        "capacity": 0.20,
+        "importance": 0.15,
+        "junction": 0.10,
+        "temporal": 0.35,
+        "density": 0.10,
+        "severity": 0.10,
+    },
+    "equal": {
+        "capacity": 1 / 6,
+        "importance": 1 / 6,
+        "junction": 1 / 6,
+        "temporal": 1 / 6,
+        "density": 1 / 6,
+        "severity": 1 / 6,
+    },
+}
+
+# =============================================================================
 # VISUALIZATION
 # =============================================================================
 PLOT_DPI = 150
