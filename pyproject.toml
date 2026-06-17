@@ -1,0 +1,216 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "drishtam"
+version = "0.1.0"
+description = "DRISHTAM — AI-Driven Parking Congestion Intelligence Platform for Bengaluru"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "geopandas>=0.14",
+    "osmnx>=1.9",
+    "shapely>=2.0",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+    "hdbscan>=0.8",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "plotly>=5.18",
+    "folium>=0.15",
+    "shap>=0.44",
+    "torch>=2.2",
+    "torch-geometric>=2.5",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.6",
+    "pyarrow>=15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "mypy>=1.9",
+    "bandit>=1.7",
+    "pytest>=8.1",
+    "pytest-cov>=5.0",
+    "pre-commit>=3.7",
+]
+
+# ==============================================================================
+# RUFF — Fast Python Linter + Formatter (replaces flake8, isort, black, pylint)
+# ==============================================================================
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["drishtam", "api", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    # --- Core Python Quality ---
+    "E",       # pycodestyle errors
+    "W",       # pycodestyle warnings
+    "F",       # pyflakes (unused imports, undefined names)
+    "I",       # isort (import ordering)
+    "N",       # pep8-naming conventions
+    "UP",      # pyupgrade (modern Python syntax)
+
+    # --- Bug Prevention ---
+    "B",       # flake8-bugbear (common bugs, design problems)
+    "A",       # flake8-builtins (don't shadow builtins)
+    "SIM",     # flake8-simplify (unnecessary complexity)
+    "C4",      # flake8-comprehensions (better list/dict/set comprehensions)
+    "RET",     # flake8-return (unnecessary return statements)
+    "PIE",     # flake8-pie (misc lints)
+    "PERF",    # perflint (performance anti-patterns)
+
+    # --- Security ---
+    "S",       # flake8-bandit (security issues)
+
+    # --- Documentation ---
+    "D",       # pydocstyle (docstring conventions)
+
+    # --- Type Checking ---
+    "TCH",     # flake8-type-checking (TYPE_CHECKING imports)
+    "ANN",     # flake8-annotations (type annotation enforcement)
+
+    # --- Error Handling ---
+    "TRY",     # tryceratops (exception handling best practices)
+    "EM",      # flake8-errmsg (error message formatting)
+
+    # --- Path/OS Safety ---
+    "PTH",     # flake8-use-pathlib (prefer pathlib over os.path)
+
+    # --- Logging ---
+    "LOG",     # flake8-logging (proper logging practices)
+    "G",       # flake8-logging-format (logging format strings)
+]
+
+ignore = [
+    # --- Docstrings (relax for scripts, keep for library) ---
+    "D100",    # Missing docstring in public module (allow for scripts)
+    "D104",    # Missing docstring in public package
+    "D203",    # One blank line before class docstring (conflicts with D211)
+    "D213",    # Multi-line docstring summary on second line (conflicts with D212)
+
+    # --- Annotations (relax for data science code) ---
+    "ANN401",  # Dynamically typed expressions (Any) — needed for pandas
+
+    # --- Security (context-specific exceptions) ---
+    "S101",    # Use of assert — we use assertions for verification checks
+    "S603",    # subprocess call — we don't use subprocess
+    "S607",    # Starting a process with a partial path
+
+    # --- Try/Except ---
+    "TRY003",  # Avoid specifying long messages outside exception class
+
+    # --- Performance ---
+    "PERF203", # try-except in loop — sometimes necessary for data processing
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Scripts are allowed more relaxed rules
+"scripts/*.py" = ["D103", "ANN", "T201"]  # Allow print(), no function docstrings
+"eda_*.py" = ["D", "ANN", "S", "T201"]    # EDA scripts are exploratory
+"tests/*.py" = ["D103", "ANN", "S101"]     # Tests use assert
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["drishtam"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+
+# ==============================================================================
+# MYPY — Static Type Checking
+# ==============================================================================
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+disallow_untyped_defs = false          # Relaxed — full typing is aspirational
+disallow_incomplete_defs = false
+no_implicit_optional = true
+strict_equality = true
+show_error_codes = true
+show_column_numbers = true
+
+[[tool.mypy.overrides]]
+module = [
+    "osmnx.*",
+    "geopandas.*",
+    "shapely.*",
+    "hdbscan.*",
+    "torch_geometric.*",
+    "shap.*",
+    "folium.*",
+    "seaborn.*",
+    "xgboost.*",
+    "lightgbm.*",
+]
+ignore_missing_imports = true
+
+# ==============================================================================
+# BANDIT — Security Analysis
+# ==============================================================================
+[tool.bandit]
+exclude_dirs = [".venv", "node_modules", "dashboard", ".mypy_cache", ".ruff_cache"]
+skips = ["B101"]  # Skip assert warnings (we use them for verification)
+
+# ==============================================================================
+# PYTEST — Testing
+# ==============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-v",
+    "--cov=drishtam",
+    "--cov-report=term-missing",
+    "--cov-fail-under=60",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU",
+    "integration: marks integration tests",
+]
+
+# ==============================================================================
+# COVERAGE
+# ==============================================================================
+[tool.coverage.run]
+source = ["drishtam"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "scripts/*",
+    "eda_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "pass",
+    "\\.\\.\\.",
+]

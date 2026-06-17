@@ -1,0 +1,60 @@
+# DRISHTAM .gitignore
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# --- Virtual Environment ---
+.venv/
+venv/
+ENV/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Tool Caches ---
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# --- Data (large files — not in git) ---
+data/*.parquet
+data/*.pt
+data/*.graphml
+data/models/
+*.csv
+
+# --- Dashboard ---
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.production
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+
+# --- Cache ---
+cache/
