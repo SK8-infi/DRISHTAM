@@ -12,7 +12,7 @@
 ### Step 4.1.1: Baseline Impact Computation
 
 ```
-File: parkimpact/counterfactual.py → compute_baseline_impact()
+File: drishtam/counterfactual.py → compute_baseline_impact()
 ```
 
 **Tasks**:
@@ -34,7 +34,7 @@ File: parkimpact/counterfactual.py → compute_baseline_impact()
 ### Step 4.1.2: Intervention Simulator
 
 ```
-File: parkimpact/counterfactual.py → simulate_intervention()
+File: drishtam/counterfactual.py → simulate_intervention()
 ```
 
 **Tasks**:
@@ -114,7 +114,7 @@ For each scenario, record:
 ### Step 4.2.1: Feature Engineering for Prediction
 
 ```
-File: parkimpact/risk_forecaster.py → build_prediction_features()
+File: drishtam/risk_forecaster.py → build_prediction_features()
 ```
 
 **Target variable**: For each (road_segment, time_slot) pair:
@@ -169,7 +169,7 @@ Total: ~22 features
 ### Step 4.2.2: Model Training
 
 ```
-File: parkimpact/risk_forecaster.py → train_risk_model()
+File: drishtam/risk_forecaster.py → train_risk_model()
 ```
 
 **Primary model: XGBoost**
@@ -222,7 +222,7 @@ params = {
 ### Step 4.2.3: SHAP Explainability
 
 ```
-File: parkimpact/risk_forecaster.py → generate_shap_explanations()
+File: drishtam/risk_forecaster.py → generate_shap_explanations()
 ```
 
 **Tasks**:
@@ -248,7 +248,7 @@ File: parkimpact/risk_forecaster.py → generate_shap_explanations()
 ### Step 4.2.4: Risk Map Generation
 
 ```
-File: parkimpact/risk_forecaster.py → generate_risk_maps()
+File: drishtam/risk_forecaster.py → generate_risk_maps()
 ```
 
 **Tasks**:
@@ -296,8 +296,8 @@ File: parkimpact/risk_forecaster.py → generate_risk_maps()
 
 | Deliverable | File | Description |
 |---|---|---|
-| Counterfactual engine | `parkimpact/counterfactual.py` | What-if simulation |
-| Risk forecaster | `parkimpact/risk_forecaster.py` | XGBoost + LightGBM prediction |
+| Counterfactual engine | `drishtam/counterfactual.py` | What-if simulation |
+| Risk forecaster | `drishtam/risk_forecaster.py` | XGBoost + LightGBM prediction |
 | Counterfactual script | `scripts/05_generate_counterfactuals.py` | Run all 12 scenarios |
 | Forecaster training | `scripts/04_train_forecaster.py` | Train + evaluate + SHAP |
 | Scenario results | `data/counterfactual_scenarios.json` | Pre-computed scenario results |

@@ -12,7 +12,7 @@
 ### Step 2.1.1: Component Functions
 
 ```
-File: parkimpact/impact_scorer.py
+File: drishtam/impact_scorer.py
 ```
 
 Each component is a standalone function that returns a 0-1 normalized score per violation.
@@ -264,7 +264,7 @@ def learn_optimal_weights(viol_df, events_df, grid_size=500):
 ### Step 2.3.1: Spatial Clustering
 
 ```
-File: parkimpact/clustering.py
+File: drishtam/clustering.py
 ```
 
 **Tasks**:
@@ -342,8 +342,8 @@ File: research/07_parking_impact_scores.md
 
 | Deliverable | File | Description |
 |---|---|---|
-| Impact scorer module | `parkimpact/impact_scorer.py` | PIS computation with 6 components |
-| Clustering module | `parkimpact/clustering.py` | HDBSCAN clustering + characterization |
+| Impact scorer module | `drishtam/impact_scorer.py` | PIS computation with 6 components |
+| Clustering module | `drishtam/clustering.py` | HDBSCAN clustering + characterization |
 | PIS computation script | `scripts/02_compute_impact_scores.py` | End-to-end PIS pipeline |
 | Updated dataset | `data/violations_enriched.parquet` | Now includes PIS + cluster_id |
 | Research report | `research/07_parking_impact_scores.md` | Full findings with all charts |

@@ -11,8 +11,8 @@ All tools are configured in [`pyproject.toml`](../pyproject.toml).
 | Tool | Purpose | Config Section | Run Command |
 |---|---|---|---|
 | **Ruff** | Linting + Formatting + Import sorting | `[tool.ruff]` | `ruff check . --fix` / `ruff format .` |
-| **Mypy** | Static type checking | `[tool.mypy]` | `mypy parkimpact/` |
-| **Bandit** | Security vulnerability scanning | `[tool.bandit]` | `bandit -r parkimpact/ -c pyproject.toml` |
+| **Mypy** | Static type checking | `[tool.mypy]` | `mypy drishtam/` |
+| **Bandit** | Security vulnerability scanning | `[tool.bandit]` | `bandit -r drishtam/ -c pyproject.toml` |
 | **Pytest** | Unit + integration testing | `[tool.pytest]` | `pytest` |
 | **Coverage** | Code coverage (minimum 60%) | `[tool.coverage]` | `pytest --cov` |
 
@@ -193,7 +193,7 @@ def load_data(path: Path) -> pd.DataFrame:
 ### 4.1 Custom Exceptions
 
 ```python
-# parkimpact/exceptions.py
+# drishtam/exceptions.py
 class ParkImpactError(Exception):
     """Base exception for ParkImpact."""
 
@@ -322,7 +322,7 @@ def sample_edges() -> gpd.GeoDataFrame:
 Every phase has verification checks. These are implemented as runnable functions:
 
 ```python
-# parkimpact/verification.py
+# drishtam/verification.py
 
 def verify_enriched_data(df: pd.DataFrame) -> dict[str, bool]:
     """Run all Phase 1 data quality checks.
@@ -410,10 +410,10 @@ ruff format .
 ruff check . --fix
 
 # Security scan
-bandit -r parkimpact/ -c pyproject.toml
+bandit -r drishtam/ -c pyproject.toml
 
 # Type checking
-mypy parkimpact/
+mypy drishtam/
 
 # Run tests
 pytest

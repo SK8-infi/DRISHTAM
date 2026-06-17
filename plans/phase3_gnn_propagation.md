@@ -12,7 +12,7 @@
 ### Step 3.1.1: Line Graph Transformation
 
 ```
-File: parkimpact/graph_builder.py → osm_to_line_graph()
+File: drishtam/graph_builder.py → osm_to_line_graph()
 ```
 
 **Concept**: In the OSM graph, roads are edges and intersections are nodes. For our GNN, we need roads as nodes (we want to score road segments). So we perform a **line graph transformation**:
@@ -39,7 +39,7 @@ File: parkimpact/graph_builder.py → osm_to_line_graph()
 ### Step 3.1.2: Node Feature Engineering
 
 ```
-File: parkimpact/graph_builder.py → build_node_features()
+File: drishtam/graph_builder.py → build_node_features()
 ```
 
 Each node (= road segment) gets an 12-dimensional feature vector:
@@ -79,7 +79,7 @@ Each node (= road segment) gets an 12-dimensional feature vector:
 ### Step 3.1.3: Edge Feature Engineering
 
 ```
-File: parkimpact/graph_builder.py → build_edge_features()
+File: drishtam/graph_builder.py → build_edge_features()
 ```
 
 Each edge in our line graph (= junction connecting two road segments) gets features:
@@ -97,7 +97,7 @@ Each edge in our line graph (= junction connecting two road segments) gets featu
 ### Step 3.1.4: Build PyTorch Geometric Data Object
 
 ```
-File: parkimpact/graph_builder.py → build_pyg_data()
+File: drishtam/graph_builder.py → build_pyg_data()
 ```
 
 **Tasks**:
@@ -127,7 +127,7 @@ File: parkimpact/graph_builder.py → build_pyg_data()
 We don't have real traffic flow data, but we have **traffic events** as a proxy for congestion. We use event density around each road segment as a supervision signal.
 
 ```
-File: parkimpact/graph_builder.py → build_training_labels()
+File: drishtam/graph_builder.py → build_training_labels()
 ```
 
 **Tasks**:
@@ -169,7 +169,7 @@ File: parkimpact/graph_builder.py → build_training_labels()
 ### Step 3.3.1: Model Architecture
 
 ```
-File: parkimpact/propagation_model.py → class ParkImpactGAT
+File: drishtam/propagation_model.py → class ParkImpactGAT
 ```
 
 ```
@@ -201,7 +201,7 @@ Architecture:
 ### Step 3.3.2: Training Loop
 
 ```
-File: parkimpact/propagation_model.py → train_propagation_model()
+File: drishtam/propagation_model.py → train_propagation_model()
 ```
 
 **Tasks**:
@@ -240,7 +240,7 @@ File: parkimpact/propagation_model.py → train_propagation_model()
 ### Step 3.4.1: Full-City Propagation Scoring
 
 ```
-File: parkimpact/propagation_model.py → predict_propagation()
+File: drishtam/propagation_model.py → predict_propagation()
 ```
 
 **Tasks**:
@@ -294,8 +294,8 @@ File: parkimpact/propagation_model.py → predict_propagation()
 
 | Deliverable | File | Description |
 |---|---|---|
-| Graph builder module | `parkimpact/graph_builder.py` | OSM → PyG graph + features |
-| Propagation model module | `parkimpact/propagation_model.py` | GAT model + training + inference |
+| Graph builder module | `drishtam/graph_builder.py` | OSM → PyG graph + features |
+| Propagation model module | `drishtam/propagation_model.py` | GAT model + training + inference |
 | Graph build script | `scripts/03_build_road_graph.py` | End-to-end graph construction |
 | Trained model | `data/models/gat_propagation.pt` | Best GAT checkpoint |
 | Graph data | `data/road_graph.pt` | PyG Data object |

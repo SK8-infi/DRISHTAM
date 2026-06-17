@@ -24,8 +24,8 @@ All code must pass quality gates before proceeding to next phase.
 | Tool | Purpose | Command |
 |---|---|---|
 | **Ruff** | Lint + Format + Security | `ruff check . --fix` / `ruff format .` |
-| **Mypy** | Static type checking | `mypy parkimpact/` |
-| **Bandit** | Security vulnerability scan | `bandit -r parkimpact/ -c pyproject.toml` |
+| **Mypy** | Static type checking | `mypy drishtam/` |
+| **Bandit** | Security vulnerability scan | `bandit -r drishtam/ -c pyproject.toml` |
 | **Pytest** | Unit + integration tests (≥60% coverage) | `pytest --cov` |
 | **All at once** | Run everything | `python scripts/quality_check.py` |
 
