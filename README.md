@@ -335,31 +335,21 @@ The What-If engine doesn't just show "impact reduced." It computes and returns *
 flowchart TD
     RAW[(Raw Violations CSV\n298K x 25 columns)]
 
-    S1[01_build_enriched_data.py\nRoad matching, PIS scoring, temporal encoding\nHDBSCAN clustering, proximity features]
-    O1[/violations_enriched.parquet\n298K x 87 features/]
+    S1["01_build_enriched_data.py\n-> violations_enriched.parquet\n298K x 87 features"]
+    S2["02_compute_impact_scores.py\n-> propagated_impact.parquet"]
+    S3["03b_simulate_traffic.py\n-> simulation/baseline_flows\n-> simulation/delay_metrics"]
+    S4["03c_retrain_gnn_twin.py\n-> gbm_36d_best.pkl\n-> features_36d.npy"]
+    S5["04_train_forecaster.py\n-> risk_forecaster_best.pkl\n-> risk_predictions.parquet"]
+    S6["05_generate_counterfactuals.py\n-> counterfactual_scenarios.json"]
+    S7["06_optimize_enforcement.py\n-> enforcement_schedule.json\n-> fleet_comparison.json"]
 
-    S2[02_compute_impact_scores.py\nPIS computation, graph propagation\nGAT neural network training]
-    O2[/propagated_impact.parquet/]
-
-    S3[03b_simulate_traffic.py\nFrank-Wolfe UE, BPR functions\n80-zone OD matrix, 6-hour simulation]
-    O3[/simulation/baseline_flows\nsimulation/delay_metrics/]
-
-    S4[03c_retrain_gnn_twin.py\nGBM-36D training on sim labels\nGPU betweenness centrality]
-    O4[/gbm_36d_best.pkl\nfeatures_36d.npy/]
-    GPU{{Requires GPU - Colab}}
-
-    S5[04_train_forecaster.py\n27 model experiments\nFeature ablation + blending]
-    O5[/risk_forecaster_best.pkl\nrisk_predictions.parquet/]
-
-    S6[05_generate_counterfactuals.py\n12 enforcement scenarios\nMonotonicity verification]
-    O6[/counterfactual_scenarios.json/]
-
-    S7[06_optimize_enforcement.py\nGreedy allocation + spatial exclusion\nFleet size comparison]
-    O7[/enforcement_schedule.json\nfleet_comparison.json/]
-
-    RAW --> S1 --> O1 --> S2 --> O2 --> S3 --> O3 --> S4
-    GPU -.-> S4
-    S4 --> O4 --> S5 --> O5 --> S6 --> O6 --> S7 --> O7
+    RAW --> S1
+    S1 -->|Road matching, PIS scoring\nHDBSCAN clustering| S2
+    S2 -->|PIS computation\nGAT propagation| S3
+    S3 -->|Frank-Wolfe UE\n80-zone OD matrix| S4
+    S4 -->|GBM-36D training\nRequires GPU - Colab| S5
+    S5 -->|27 experiments\nFeature ablation| S6
+    S6 -->|12 scenarios\nMonotonicity check| S7
 ```
 
 ---
