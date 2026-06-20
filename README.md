@@ -153,7 +153,6 @@ flowchart LR
     E2 --> OPT[Patrol Optimizer\nWho goes where?]
     OPT --> OUT([Proactive\nEnforcement])
 ```
-```
 
 ---
 
