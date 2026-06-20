@@ -17,7 +17,7 @@ export default function ClustersPage() {
 
   const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
 
-  if (isLoading) return <div className="loading"><div className="spinner" />Loading clusters...</div>;
+  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading clusters...</div>;
 
   const clusters = data?.clusters || [];
   
@@ -38,7 +38,7 @@ export default function ClustersPage() {
         <div>
           <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ color: "var(--accent)" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              <svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             </span>
             Cluster Explorer
           </h2>
@@ -80,6 +80,8 @@ export default function ClustersPage() {
               <button 
                 key={c.cluster_id}
                 onClick={() => setSelectedClusterId(c.cluster_id)}
+                aria-label={`Cluster ${c.cluster_id}: ${c.top_road}, ${c.mean_pis.toFixed(1)} PIS, ${formatNumber(c.n_violations)} violations`}
+                aria-pressed={selectedClusterId === c.cluster_id}
                 style={{
                   textAlign: "left",
                   padding: "16px",

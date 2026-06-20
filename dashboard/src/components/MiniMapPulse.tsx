@@ -14,7 +14,7 @@ export default function MiniMapPulse() {
   if (!mounted) return <div style={{ height: 140, background: "#080808", borderRadius: "var(--radius)" }} />;
 
   return (
-    <div className="mini-map-container" style={{
+    <div className="mini-map-container" role="img" aria-label="Live map of Bengaluru city center" style={{
       position: "relative",
       width: "100%",
       height: "140px",

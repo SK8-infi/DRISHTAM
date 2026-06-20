@@ -9,7 +9,7 @@ const data = [
 
 export default function ParetoDonut() {
   return (
-    <div style={{ width: "100%", height: 160, position: "relative" }}>
+    <div style={{ width: "100%", height: 160, position: "relative" }} role="img" aria-label="Pareto chart: 13.8% of critical violations account for 80% of total impact">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie

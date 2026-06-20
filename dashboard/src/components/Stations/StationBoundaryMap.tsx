@@ -119,7 +119,7 @@ export default function StationBoundaryMap({ stations, selectedStation, onStatio
           backdrop-filter: blur(4px);
         }
       `}</style>
-      <div ref={containerRef} style={{ width: "100%", height: "100%", background: "#0a0a0a" }} />
+      <div ref={containerRef} role="application" aria-label="Interactive map showing police station jurisdiction boundaries" style={{ width: "100%", height: "100%", background: "#0a0a0a" }} />
     </>
   );
 }

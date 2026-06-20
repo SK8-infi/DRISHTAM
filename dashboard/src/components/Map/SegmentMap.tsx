@@ -213,7 +213,7 @@ export default function SegmentMap({ mode, segments, riskSegments = [], patrolAs
           }
         }
       `}</style>
-      <div ref={containerRef} style={{ width: "100%", height: "100%", borderRadius: "var(--radius)", overflow: "hidden" }} />
+      <div ref={containerRef} role="application" aria-label="Interactive map showing traffic enforcement segments" style={{ width: "100%", height: "100%", borderRadius: "var(--radius)", overflow: "hidden" }} />
     </>
   );
 }

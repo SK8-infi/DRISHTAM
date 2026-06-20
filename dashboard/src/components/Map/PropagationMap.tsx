@@ -266,7 +266,7 @@ export default function PropagationMap({ result, onAreaSelected }: Props) {
           background-color: rgba(139, 92, 246, 0.3) !important;
         }
       `}</style>
-      <div ref={containerRef} style={{ width: "100%", height: "100%", borderRadius: "var(--radius)", overflow: "hidden" }} />
+      <div ref={containerRef} role="application" aria-label="Interactive What-If simulation map showing enforcement propagation" style={{ width: "100%", height: "100%", borderRadius: "var(--radius)", overflow: "hidden" }} />
 
       {/* Empty state overlay */}
       {!result && (
@@ -279,7 +279,7 @@ export default function PropagationMap({ result, onAreaSelected }: Props) {
         }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ marginBottom: "12px", opacity: 0.5, color: "var(--text-muted)" }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+              <svg aria-hidden="true" focusable="false" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
             </div>
             <div style={{ fontSize: "14px", color: "var(--text-muted)", fontWeight: 500 }}>
               Select roads, use scenario cards,<br/>or <span style={{ color: "#a78bfa" }}>draw a shape</span> on the map
