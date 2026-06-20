@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOverview, fetchStations } from "@/lib/api";
 import { formatNumber } from "@/lib/colors";
@@ -33,21 +34,21 @@ export default function OverviewPage() {
     queryFn: () => fetchStations(),
   });
 
-  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading AI engines...</div>;
-  if (error || !data) return <div className="loading" role="alert">Failed to connect to AI Core</div>;
-
-  const hourlyDataArray = Object.values(data.hourly_distribution);
-  const getSparklineData = (index: number) => {
+  const hourlyDataArray = useMemo(() => data ? Object.values(data.hourly_distribution) : [], [data]);
+  const getSparklineData = useMemo(() => (index: number) => {
     // Perturb the array slightly to visually differentiate the charts while preserving the real trend
     return hourlyDataArray.map((val, i) => Math.max(0, val * (1 + Math.sin(index + i) * 0.4)));
-  };
+  }, [hourlyDataArray]);
 
-  const kpis = [
+  const kpis = useMemo(() => data ? [
     { icon: Icons.Car, label: "Total Violations", value: formatNumber(data.total_violations), sub: "Jan-May 2025" },
     { icon: Icons.Road, label: "Segments Affected", value: formatNumber(data.affected_segments), sub: `of ${formatNumber(data.total_segments)} total` },
     { icon: Icons.House, label: "Unique Roads", value: formatNumber(data.unique_roads), sub: `${data.pct_car}% are cars` },
     { icon: Icons.Impact, label: "Baseline Impact", value: formatNumber(data.baseline_impact), sub: "Network-wide GBM score" },
-  ];
+  ] : [], [data]);
+
+  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading AI engines...</div>;
+  if (error || !data) return <div className="loading" role="alert">Failed to connect to AI Core</div>;
 
   return (
     <div className="animate-in">

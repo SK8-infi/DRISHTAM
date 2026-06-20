@@ -43,6 +43,12 @@ const nextConfig: NextConfig = {
 
   // ── Disable X-Powered-By header ───────────────────────────
   poweredByHeader: false,
+
+  // ── Enable gzip compression ───────────────────────────────
+  compress: true,
+
+  // ── Strict mode for development ───────────────────────────
+  reactStrictMode: true,
 };
 
 export default nextConfig;

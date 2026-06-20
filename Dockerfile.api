@@ -1,22 +1,30 @@
-FROM python:3.11-slim
+# ── Stage 1: Install dependencies ────────────────────────────
+FROM python:3.11-slim AS deps
 
-# ── Security: Don't run as root ──────────────────────────────
-# Create a non-root user for running the application
+WORKDIR /app
+
+# System deps (build only)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python deps — cached separately from source code
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+
+# ── Stage 2: Production image ────────────────────────────────
+FROM python:3.11-slim AS production
+
+# Security: Don't run as root
 RUN groupadd --gid 1001 drishtam && \
     useradd --uid 1001 --gid drishtam --shell /bin/bash --create-home drishtam
 
 WORKDIR /app
 
-# System deps (build only — removed after pip install)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    # Remove build deps to reduce attack surface
-    apt-get purge -y --auto-remove build-essential 2>/dev/null || true
+# Copy installed packages from deps stage (no build-essential needed)
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
 
 # Copy source (data & models are downloaded from GCS at startup)
 COPY --chown=drishtam:drishtam drishtam/ ./drishtam/
@@ -31,7 +39,7 @@ ENV DRISHTAM_ENV=production
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# ── Security: Switch to non-root user ────────────────────────
+# Security: Switch to non-root user
 USER drishtam
 
 EXPOSE 8000

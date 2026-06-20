@@ -6,6 +6,7 @@ Every API endpoint computes fresh from these loaded engines.
 
 from __future__ import annotations
 
+import functools
 import logging
 import time
 from pathlib import Path
@@ -87,6 +88,10 @@ class EngineStore:
         self._compute_overview()
 
         self.ready = True
+        self._insights_cache: dict | None = None
+        self._risk_cache: dict[int, list[dict]] = {}
+        self._clusters_cache: list[dict] | None = None
+        self._stations_cache: dict[str | None, list[dict]] = {}
         logger.info(f"All engines loaded in {time.time()-t0:.1f}s ✅")
 
     # ── Segments ──────────────────────────────────────────────
@@ -233,13 +238,10 @@ class EngineStore:
         Otherwise, enforce all segments matching road_names.
         """
         if seg_indices_input:
-            # Direct segment indices from polygon selection
-            # Map seg_idx values to DataFrame row positions
-            seg_idx_set = set(seg_indices_input)
-            seg_indices = np.array([
-                i for i, row in enumerate(self.segments.itertuples())
-                if row.seg_idx in seg_idx_set
-            ])
+            # Vectorized: use np.isin instead of itertuples loop
+            seg_idx_array = np.array(seg_indices_input)
+            mask = np.isin(self.segments["seg_idx"].values, seg_idx_array)
+            seg_indices = np.where(mask)[0]
             # Derive road names for display
             if len(seg_indices) > 0:
                 road_names = list(self.segments.iloc[seg_indices]["road_name"].unique())
@@ -294,7 +296,8 @@ class EngineStore:
 
         # ── Propagation rings ──
         # Hop 0: directly enforced segments
-        enforced_set = set(seg_indices)
+        enforced_set = set(seg_indices.tolist())  # Convert once, reuse
+        enforced_set_list = list(enforced_set)  # Pre-compute list form
         improved_mask = delta > 0.001
         all_improved = set(np.where(improved_mask)[0])
 
@@ -326,8 +329,8 @@ class EngineStore:
         for i in hop1_indices:
             road = str(self.segments.iloc[i]["road_name"])
             # Check if this segment's lat/lon is within ~500m of any enforced segment
-            dist = np.min(np.abs(self.seg_lat[list(enforced_set)] - self.seg_lat[i]) +
-                          np.abs(self.seg_lon[list(enforced_set)] - self.seg_lon[i]))
+            dist = np.min(np.abs(self.seg_lat[enforced_set_list] - self.seg_lat[i]) +
+                          np.abs(self.seg_lon[enforced_set_list] - self.seg_lon[i]))
             if dist < 0.005:  # ~500m
                 hop1_actual.append(i)
             else:
@@ -405,7 +408,11 @@ class EngineStore:
         logger.info(f"  Engine 3: {len(self.risk_df)} risk predictions loaded")
 
     def get_risk(self, hour: int, top_n: int = 50) -> list[dict]:
-        """Get top risky segments for a given hour (scores normalized 0-1)."""
+        """Get top risky segments for a given hour (cached after first call)."""
+        cache_key = (hour, top_n)
+        if cache_key in self._risk_cache:
+            return self._risk_cache[cache_key]
+
         if self.risk_df.empty:
             return []
         hourly = self.risk_df[self.risk_df["hour"] == hour]
@@ -414,7 +421,9 @@ class EngineStore:
         global_max = self.risk_df["risk_score"].max()
         if global_max > 0:
             top["risk_score"] = top["risk_score"] / global_max
-        return top.to_dict("records")
+        result = top.to_dict("records")
+        self._risk_cache[cache_key] = result
+        return result
 
     def get_risk_range(self, hour_start: int, hour_end: int, top_n: int = 30) -> dict:
         """Get risk data for animation (range of hours)."""
@@ -492,7 +501,10 @@ class EngineStore:
         logger.info(f"  Stations: {len(self.stations)} ({self.stations['division'].value_counts().to_dict()})")
 
     def get_stations(self, division: str | None = None) -> list[dict]:
-        """Return station summaries, optionally filtered by division."""
+        """Return station summaries, optionally filtered by division (cached)."""
+        if division in self._stations_cache:
+            return self._stations_cache[division]
+
         df = self.stations
         if division:
             df = df[df["division"].str.lower() == division.lower()]
@@ -500,8 +512,10 @@ class EngineStore:
             "station_name", "division", "violations", "total_pis", "mean_pis",
             "roads", "devices", "mean_lat", "mean_lon", "bbox",
         ]
-        result = df[cols].rename(columns={"mean_lat": "lat", "mean_lon": "lon"})
-        return result.to_dict("records")
+        result_df = df[cols].rename(columns={"mean_lat": "lat", "mean_lon": "lon"})
+        result = result_df.to_dict("records")
+        self._stations_cache[division] = result
+        return result
 
     def get_station_detail(self, station_name: str) -> dict | None:
         """Full drill-down for a single station."""
@@ -796,7 +810,12 @@ class EngineStore:
         logger.info(f"  Clusters: {len(self.clusters)}")
 
     def get_clusters(self, top_n: int = 30) -> list[dict]:
-        return self.clusters.head(top_n).to_dict("records")
+        """Return top clusters (cached after first call)."""
+        if self._clusters_cache is not None and len(self._clusters_cache) >= top_n:
+            return self._clusters_cache[:top_n]
+        result = self.clusters.head(top_n).to_dict("records")
+        self._clusters_cache = result
+        return result
 
     def get_cluster_detail(self, cluster_id: int) -> dict | None:
         """Full drill-down for a single cluster."""
@@ -902,7 +921,10 @@ class EngineStore:
     # ── Insights Engine ───────────────────────────────────────
 
     def compute_insights(self) -> dict:
-        """Compute all insights from live engine data."""
+        """Compute all insights from live engine data (cached after first call)."""
+        if self._insights_cache is not None:
+            return self._insights_cache
+
         v = self.violations
         s = self.segments
         ov = self.overview
@@ -1106,12 +1128,14 @@ class EngineStore:
             "clusters": f"HDBSCAN with min_cluster_size=50. Detected {len(self.clusters)} spatial clusters.",
         }
 
-        return {
+        result = {
             "findings": findings,
             "data_quality": data_quality,
             "experiments": experiments,
             "methodology": methodology,
         }
+        self._insights_cache = result
+        return result
 
 
 # Global singleton

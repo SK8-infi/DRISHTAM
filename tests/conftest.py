@@ -165,6 +165,11 @@ class MockEngineStore(EngineStore):
         self._compute_mock_overview()
 
         self.ready = True
+        # Cache attributes (matching EngineStore.load_all)
+        self._insights_cache: dict | None = None
+        self._risk_cache: dict = {}
+        self._clusters_cache: list | None = None
+        self._stations_cache: dict = {}
 
     def _load_mock_stations(self):
         from api.engine_loader import STATION_TO_DIVISION

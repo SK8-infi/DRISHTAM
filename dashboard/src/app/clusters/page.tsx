@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchClusters } from "@/lib/api";
 import { formatNumber } from "@/lib/colors";
@@ -17,12 +17,10 @@ export default function ClustersPage() {
 
   const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
 
-  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading clusters...</div>;
+  const clusters = useMemo(() => data?.clusters || [], [data]);
+  const topClusters = useMemo(() => clusters.slice(0, 5), [clusters]);
 
-  const clusters = data?.clusters || [];
-  
-  // Get top 5 clusters
-  const topClusters = clusters.slice(0, 5);
+  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading clusters...</div>;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px)", overflow: "hidden" }}>

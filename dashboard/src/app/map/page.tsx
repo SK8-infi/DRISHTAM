@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useDebounce } from "@/lib/useDebounce";
 import {
   fetchSegments,
   fetchSegmentDetail,
@@ -40,12 +41,17 @@ export default function MapPage() {
   const [allocationMode, setAllocationMode] = useState<"proportional" | "custom">("proportional");
   const [customAlloc, setCustomAlloc] = useState<Record<string, number>>({});
 
+  // Debounce slider values to prevent API calls on every pixel
+  const debouncedMinImpact = useDebounce(minImpact, 300);
+  const debouncedMaxImpact = useDebounce(maxImpact, 300);
+  const debouncedOfficers = useDebounce(numOfficers, 300);
+  const debouncedHour = useDebounce(currentHour, 200);
+
   // 1. Impact Corridors
   const { data: segData, isLoading: isLoadingSegments } = useQuery({
-    queryKey: ["segments", bbox, minImpact, maxImpact],
-    queryFn: () => fetchSegments({ ...bbox, min_impact: minImpact, max_impact: maxImpact, limit: 5000 }),
+    queryKey: ["segments", bbox, debouncedMinImpact, debouncedMaxImpact],
+    queryFn: () => fetchSegments({ ...bbox, min_impact: debouncedMinImpact, max_impact: debouncedMaxImpact, limit: 5000 }),
     enabled: mode === "impact",
-    staleTime: 30_000,
   });
 
   // 2. Risk Forecast
@@ -58,11 +64,11 @@ export default function MapPage() {
 
   // 3. Optimal Patrol
   const { data: patrolData, isLoading: isLoadingPatrol } = useQuery({
-    queryKey: ["optimize", numOfficers, allocationMode, customAlloc],
+    queryKey: ["optimize", debouncedOfficers, allocationMode, customAlloc],
     queryFn: async () => {
       if (allocationMode === "proportional") {
         return runStationOptimize({
-          n_officers: numOfficers,
+          n_officers: debouncedOfficers,
           shifts: 3,
           hours_per_shift: 2,
         });

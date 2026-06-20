@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
@@ -129,6 +130,9 @@ app.add_middleware(
     max_age=600,  # Cache preflight for 10 minutes
 )
 
+# 3. GZip — compress responses > 500 bytes (60-80% reduction for JSON)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
 
 # 3. Security headers middleware
 @app.middleware("http")
@@ -168,6 +172,18 @@ async def security_headers(request: Request, call_next) -> Response:
     # Remove server identity header
     if "server" in response.headers:
         del response.headers["server"]
+
+    # ── Cache-Control for deterministic endpoints ──
+    # These endpoints return static data computed at startup
+    path = request.url.path
+    if path in ("/api/overview", "/api/insights", "/api/whatif/scenarios"):
+        response.headers["Cache-Control"] = "public, max-age=300"  # 5 min
+    elif path in ("/api/stations", "/api/clusters", "/api/whatif/roads"):
+        response.headers["Cache-Control"] = "public, max-age=120"  # 2 min
+    elif path.startswith("/api/risk"):
+        response.headers["Cache-Control"] = "public, max-age=60"  # 1 min
+    elif path.startswith("/api/segment"):
+        response.headers["Cache-Control"] = "public, max-age=30"  # 30s
 
     return response
 

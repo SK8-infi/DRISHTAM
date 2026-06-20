@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useDebounce } from "@/lib/useDebounce";
 import { fetchWhatIfRoads, runWhatIf, fetchSegments, fetchStations, runStationOptimize, type WhatIfResult } from "@/lib/api";
 import ReductionGauge from "@/components/ReductionGauge";
 import dynamic from "next/dynamic";
@@ -75,10 +76,12 @@ function WhatIfContent() {
     queryFn: () => fetchStations(),
   });
 
+  const debouncedSearch = useDebounce(search, 200);
+
   const { data: roads } = useQuery({
-    queryKey: ["whatif-roads", search],
-    queryFn: () => fetchWhatIfRoads(search),
-    enabled: search.length >= 0,
+    queryKey: ["whatif-roads", debouncedSearch],
+    queryFn: () => fetchWhatIfRoads(debouncedSearch),
+    enabled: debouncedSearch.length >= 0,
   });
 
   const mutation = useMutation({
