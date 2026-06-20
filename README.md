@@ -100,91 +100,96 @@ Historical enforcement data only reflects **where you looked**, not where violat
 
 ## System Architecture
 
-```
-                          ┌─────────────────────────────────────────────┐
-                          │           DRISHTAM दृष्टम्                  │
-                          │   Predictive Enforcement Intelligence       │
-                          ├─────────────────────────────────────────────┤
-                          │                                             │
- ┌──────────────┐   ┌─────┴──────┐   ┌──────────────┐   ┌────────────┐│
- │  ENGINE 1    │   │  ENGINE 2  │   │  ENGINE 3    │   │ OPTIMIZER  ││
- │  Impact      │   │  What-If   │   │  Risk        │   │ Patrol     ││
- │  Predictor   │   │  Simulator │   │  Forecaster  │   │ Scheduler  ││
- │              │   │            │   │              │   │            ││
- │ GBM-36D     │   │ Counter-   │   │ HistGBM     │   │ Greedy +   ││
- │ r=0.59      │   │ factual    │   │ r=0.92      │   │ Spatial    ││
- │             │   │ 12 scenarios│   │ 27 models   │   │ Exclusion  ││
- └──────┬───────┘   └─────┬──────┘   └──────┬───────┘   └─────┬──────┘│
-        │                 │                  │                 │       │
-        │    Impact(road) │ Δ(road)          │ P(viol|road,h)  │       │
-        └────────────┐    │    ┌─────────────┘                 │       │
-                     ▼    ▼    ▼                               │       │
-              ┌──────────────────────┐                         │       │
-              │  Expected ROI Matrix │◄────────────────────────┘       │
-              │  = P × Impact × Δ   │                                 │
-              │  roads × 24 hours    │                                 │
-              └──────────┬───────────┘                                 │
-                         ▼                                             │
-              ┌──────────────────────┐                                 │
-              │  OPTIMAL SCHEDULE    │                                 │
-              │  "Officer 3 → Outer  │                                 │
-              │   Ring Rd, 8-10 AM"  │                                 │
-              │  (500m exclusion)    │                                 │
-              └──────────────────────┘                                 │
-                          │                                             │
- ┌────────────────────────┴─────────────────────────────────────────────┤
- │                      DATA FOUNDATION                                │
- ├──────────────────┬──────────────────┬────────────────────────────────┤
- │  298K Violations │  393K Road Segs  │  Digital Twin Simulation      │
- │  87 features     │  OSM GraphML     │  Frank-Wolfe UE · BPR · 80z  │
- └──────────────────┴──────────────────┴────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph DRISHTAM["DRISHTAM — Predictive Enforcement Intelligence"]
+        direction TB
+
+        subgraph Engines["Intelligence Engines"]
+            direction LR
+            E1["🔍 ENGINE 1<br/><b>Impact Predictor</b><br/>GBM-36D · r=0.59<br/>393K segments scored"]
+            E2["🔄 ENGINE 2<br/><b>What-If Simulator</b><br/>Counterfactual GBM<br/>12 scenarios"]
+            E3["⚡ ENGINE 3<br/><b>Risk Forecaster</b><br/>HistGBM · r=0.92<br/>27 experiments"]
+            OPT["🎯 OPTIMIZER<br/><b>Patrol Scheduler</b><br/>Greedy + Spatial<br/>Exclusion (500m)"]
+        end
+
+        ROI["📊 Expected ROI Matrix<br/><i>= P(violation) × Impact × Δ(enforcement)</i><br/>roads × 24 hours"]
+
+        SCHED["📋 OPTIMAL SCHEDULE<br/><i>Officer 3 → Outer Ring Rd, 8-10 AM</i><br/>500m spatial exclusion zone"]
+    end
+
+    subgraph Data["DATA FOUNDATION"]
+        direction LR
+        D1["📄 298K Violations<br/>87 features"]
+        D2["🗺️ 393K Road Segments<br/>OSM GraphML"]
+        D3["🔬 Digital Twin Simulation<br/>Frank-Wolfe UE · BPR · 80 zones"]
+    end
+
+    E1 -- "Impact(road)" --> ROI
+    E2 -- "Δ(road)" --> ROI
+    E3 -- "P(viol|road,h)" --> ROI
+    OPT -- "Allocation constraints" --> ROI
+    ROI --> SCHED
+
+    D1 --> Engines
+    D2 --> Engines
+    D3 --> Engines
+
+    style DRISHTAM fill:#0d1117,stroke:#58a6ff,stroke-width:2px,color:#c9d1d9
+    style Engines fill:#161b22,stroke:#30363d,color:#c9d1d9
+    style Data fill:#161b22,stroke:#30363d,color:#c9d1d9
+    style E1 fill:#1a1e24,stroke:#f0883e,color:#c9d1d9
+    style E2 fill:#1a1e24,stroke:#a371f7,color:#c9d1d9
+    style E3 fill:#1a1e24,stroke:#3fb950,color:#c9d1d9
+    style OPT fill:#1a1e24,stroke:#58a6ff,color:#c9d1d9
+    style ROI fill:#1c2333,stroke:#58a6ff,stroke-width:2px,color:#c9d1d9
+    style SCHED fill:#1c2333,stroke:#3fb950,stroke-width:2px,color:#c9d1d9
 ```
 
 ### Cloud Deployment Architecture
 
-```
-┌──────────────┐     HTTPS      ┌──────────────────────────────────────┐
-│              │ ──────────────▶ │  Google Cloud Run (asia-south1)      │
-│   Browser    │                │                                      │
-│              │                │  ┌────────────────────────────────┐  │
-│              │◀───── SSR ─────│  │  drishtam-dashboard            │  │
-│              │                │  │  Next.js 16 · Standalone       │  │
-│              │                │  │  512Mi · 1 CPU · min=1         │  │
-│              │                │  └──────────────┬─────────────────┘  │
-│              │                │                 │ API calls           │
-│              │                │  ┌──────────────▼─────────────────┐  │
-│              │                │  │  drishtam-api                  │  │
-│              │                │  │  FastAPI · Uvicorn              │  │
-│              │                │  │  4Gi · 2 CPU · min=1           │  │
-│              │                │  │  ML models loaded in memory     │  │
-│              │                │  └──────────────┬─────────────────┘  │
-│              │                │                 │ Startup fetch       │
-│              │                │  ┌──────────────▼─────────────────┐  │
-│              │                │  │  GCS Bucket: drishtam-data     │  │
-│              │                │  │  ~340MB data + models           │  │
-│              │                │  └────────────────────────────────┘  │
-└──────────────┘                └──────────────────────────────────────┘
+```mermaid
+graph LR
+    Browser["🌐 Browser"]
+
+    subgraph GCR["Google Cloud Run — asia-south1"]
+        direction TB
+        Dashboard["<b>drishtam-dashboard</b><br/>Next.js 16 · Standalone<br/>512Mi · 1 CPU · min=1"]
+        API["<b>drishtam-api</b><br/>FastAPI · Uvicorn<br/>4Gi · 2 CPU · min=1<br/>ML models in memory"]
+        GCS["<b>GCS Bucket</b><br/>drishtam-data<br/>~340MB data + models"]
+    end
+
+    Browser -- "HTTPS" --> Dashboard
+    Dashboard -- "SSR + HTML" --> Browser
+    Dashboard -- "REST API calls" --> API
+    API -- "Startup fetch" --> GCS
+
+    style GCR fill:#0d1117,stroke:#58a6ff,stroke-width:2px,color:#c9d1d9
+    style Browser fill:#1a1e24,stroke:#f0883e,color:#c9d1d9
+    style Dashboard fill:#1a1e24,stroke:#3fb950,color:#c9d1d9
+    style API fill:#1a1e24,stroke:#a371f7,color:#c9d1d9
+    style GCS fill:#1a1e24,stroke:#58a6ff,color:#c9d1d9
 ```
 
 ### Three-Engine Closed Loop
 
 The three engines aren't independent — they **feed each other** in a closed loop:
 
-```
-Engine 3 (Risk Forecaster)  →  WHERE/WHEN will violations happen?
-         │
-         ▼
-Engine 1 (Impact Predictor) →  HOW MUCH does each violation hurt?
-         │
-         ▼
-Engine 2 (What-If Simulator) → WHAT IF we enforce this road?
-         │
-         ▼
-Optimizer (Patrol Scheduler) → Send Officer 3 to Outer Ring Rd at 8 AM
-         │                     (no other officer within 500m radius)
-         ▼
-        RESULT: Predictive Proactive Enforcement
-                (not reactive catch-and-fine)
+```mermaid
+graph TD
+    E3["⚡ Engine 3 — Risk Forecaster<br/><i>WHERE/WHEN will violations happen?</i>"]
+    E1["🔍 Engine 1 — Impact Predictor<br/><i>HOW MUCH does each violation hurt?</i>"]
+    E2["🔄 Engine 2 — What-If Simulator<br/><i>WHAT IF we enforce this road?</i>"]
+    OPT["🎯 Optimizer — Patrol Scheduler<br/><i>Send Officer 3 to Outer Ring Rd at 8 AM</i><br/><i>(no other officer within 500m radius)</i>"]
+    RESULT(["✅ Predictive Proactive Enforcement<br/><i>Not reactive catch-and-fine</i>"])
+
+    E3 --> E1 --> E2 --> OPT --> RESULT
+
+    style E3 fill:#1a1e24,stroke:#3fb950,stroke-width:2px,color:#c9d1d9
+    style E1 fill:#1a1e24,stroke:#f0883e,stroke-width:2px,color:#c9d1d9
+    style E2 fill:#1a1e24,stroke:#a371f7,stroke-width:2px,color:#c9d1d9
+    style OPT fill:#1a1e24,stroke:#58a6ff,stroke-width:2px,color:#c9d1d9
+    style RESULT fill:#1c2333,stroke:#3fb950,stroke-width:3px,color:#3fb950
 ```
 
 ---
