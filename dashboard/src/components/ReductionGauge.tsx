@@ -55,8 +55,8 @@ export default function ReductionGauge({ percentage, label = "Impact Reduction" 
   const color = getColor(animated);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }} role="meter" aria-label={`${label}: -${percentage.toFixed(3)}%`} aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={maxDisplay}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }} aria-hidden="true">
         {/* Background track */}
         <circle
           cx={size / 2} cy={size / 2} r={radius}

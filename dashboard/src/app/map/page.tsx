@@ -20,10 +20,10 @@ const DEFAULT_BBOX = { lat_min: 12.85, lat_max: 13.10, lon_min: 77.45, lon_max: 
 type MapMode = "impact" | "risk" | "patrol";
 
 const Icons = {
-  Map: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>,
-  Activity: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-  Target: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-  Stations: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Map: <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>,
+  Activity: <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  Target: <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  Stations: <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
 };
 
 export default function MapPage() {
@@ -140,7 +140,7 @@ export default function MapPage() {
       </div>
 
       {/* Floating Lens Switcher (Top Left) */}
-      <div id="map-lens-panel" style={{
+      <div id="map-lens-panel" role="radiogroup" aria-label="Map visualization mode" style={{
         position: "absolute",
         top: 24, left: 24,
         zIndex: 10,
@@ -162,6 +162,9 @@ export default function MapPage() {
 
         <button 
           id="lens-impact"
+          role="radio"
+          aria-checked={mode === "impact"}
+          aria-label="Impact Corridors: Road network bottleneck mapping"
           onClick={() => setMode("impact")}
           style={{
             display: "flex", alignItems: "center", gap: "12px",
@@ -185,6 +188,9 @@ export default function MapPage() {
 
         <button 
           id="lens-patrol"
+          role="radio"
+          aria-checked={mode === "patrol"}
+          aria-label="Optimal Patrol: Simulated officer deployment"
           onClick={() => setMode("patrol")}
           style={{
             display: "flex", alignItems: "center", gap: "12px",
@@ -208,6 +214,9 @@ export default function MapPage() {
 
         <button 
           id="lens-risk"
+          role="radio"
+          aria-checked={mode === "risk"}
+          aria-label="Risk Forecast: Hourly risk emergence heatmap"
           onClick={() => setMode("risk")}
           style={{
             display: "flex", alignItems: "center", gap: "12px",
@@ -257,6 +266,8 @@ export default function MapPage() {
             step="1"
             value={currentHour}
             onChange={(e) => setCurrentHour(parseInt(e.target.value))}
+            aria-label={`Time of day: ${currentHour.toString().padStart(2, "0")}:00`}
+            aria-valuetext={`${currentHour.toString().padStart(2, "0")}:00`}
             style={{ flex: 1, accentColor: mode === "risk" ? "#ef4444" : "#8b5cf6" }}
           />
           <div style={{ color: "var(--text-muted)", fontSize: "12px", minWidth: "60px", textAlign: "right" }}>
@@ -303,6 +314,8 @@ export default function MapPage() {
                   step="0.05"
                   value={minImpact}
                   onChange={(e) => setMinImpact(parseFloat(e.target.value))}
+                  aria-label={`Minimum impact threshold: ${minImpact.toFixed(2)}`}
+                  aria-valuetext={minImpact.toFixed(2)}
                   style={{ width: "100%", accentColor: "#3b82f6" }}
                 />
                 <div style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "right" }}>
@@ -426,6 +439,8 @@ export default function MapPage() {
                     step="5"
                     value={numOfficers}
                     onChange={(e) => setNumOfficers(parseInt(e.target.value))}
+                    aria-label={`Number of officers: ${numOfficers}`}
+                    aria-valuetext={`${numOfficers} officers`}
                     style={{ width: "100%", accentColor: "#8b5cf6" }}
                   />
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", textAlign: "right" }}>

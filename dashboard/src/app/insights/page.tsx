@@ -7,11 +7,11 @@ import Link from "next/link";
 
 /* ── Icons ──────────────────────────────────────────────── */
 const Icons = {
-  impact: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
-  enforcement: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-  risk: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-  bias: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
-  arrowRight: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  impact: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+  enforcement: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  risk: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+  bias: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+  arrowRight: <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
 };
 
 function getSeverityColor(severity: string) {
@@ -31,16 +31,16 @@ export default function InsightsPage() {
     queryFn: fetchInsights,
   });
 
-  if (isLoading) return <div className="loading"><div className="spinner" />Loading dynamic insights...</div>;
-  if (error || !data) return <div className="loading" style={{ color: "var(--danger)" }}>Failed to load insights.</div>;
+  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading dynamic insights...</div>;
+  if (error || !data) return <div className="loading" role="alert" style={{ color: "var(--danger)" }}>Failed to load insights.</div>;
 
   const { findings, data_quality, experiments, methodology } = data;
 
   return (
     <div className="animate-in" style={{ position: "relative" }}>
       {/* Background ambient glows */}
-      <div style={{ position: "absolute", top: -100, left: -100, width: 400, height: 400, background: "var(--accent-glow)", filter: "blur(120px)", borderRadius: "50%", zIndex: 0, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: 400, right: -100, width: 300, height: 300, background: "rgba(139, 92, 246, 0.15)", filter: "blur(100px)", borderRadius: "50%", zIndex: 0, pointerEvents: "none" }} />
+      <div aria-hidden="true" style={{ position: "absolute", top: -100, left: -100, width: 400, height: 400, background: "var(--accent-glow)", filter: "blur(120px)", borderRadius: "50%", zIndex: 0, pointerEvents: "none" }} />
+      <div aria-hidden="true" style={{ position: "absolute", top: 400, right: -100, width: 300, height: 300, background: "rgba(139, 92, 246, 0.15)", filter: "blur(100px)", borderRadius: "50%", zIndex: 0, pointerEvents: "none" }} />
 
       <div className="page-header" style={{ position: "relative", zIndex: 1, marginBottom: "32px" }}>
         <h2>💡 Executive Insights</h2>
@@ -180,10 +180,10 @@ export default function InsightsPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid var(--border)" }}>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>MODEL ARCHITECTURE</th>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>TYPE</th>
-                  <th style={{ padding: "16px 20px", textAlign: "right", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>FEATURES</th>
-                  <th style={{ padding: "16px 20px", textAlign: "right", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>SCORE (r)</th>
+                  <th scope="col" style={{ padding: "16px 20px", textAlign: "left", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>MODEL ARCHITECTURE</th>
+                  <th scope="col" style={{ padding: "16px 20px", textAlign: "left", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>TYPE</th>
+                  <th scope="col" style={{ padding: "16px 20px", textAlign: "right", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>FEATURES</th>
+                  <th scope="col" style={{ padding: "16px 20px", textAlign: "right", fontSize: "11px", color: "var(--text-muted)", fontWeight: 700, letterSpacing: "1px" }}>SCORE (r)</th>
                 </tr>
               </thead>
               <tbody>

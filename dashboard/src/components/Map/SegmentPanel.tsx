@@ -30,18 +30,18 @@ export default function SegmentPanel({ segment, open, onClose }: Props) {
     : [];
 
   return (
-    <div className={`segment-panel ${open ? "open" : ""}`}>
+    <div className={`segment-panel ${open ? "open" : ""}`} role="dialog" aria-label={`Segment detail: ${segment.road_name || 'Unnamed'}`} aria-modal="false">
       <div className="segment-panel-header">
         <div>
           <h3 style={{ fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2l2 18"/><path d="M19 2l-2 18"/><path d="M12 6v2"/><path d="M12 12v2"/><path d="M12 18v2"/></svg>
+            <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2l2 18"/><path d="M19 2l-2 18"/><path d="M12 6v2"/><path d="M12 12v2"/><path d="M12 18v2"/></svg>
             {segment.road_name || "Unnamed Segment"}
           </h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
             Segment #{segment.seg_idx} · {tierLabel(segment.tier)} · {segment.lanes} lanes · {segment.length_m.toFixed(0)}m
           </p>
         </div>
-        <button className="segment-panel-close" onClick={onClose}>✕</button>
+        <button className="segment-panel-close" onClick={onClose} aria-label="Close segment detail panel">✕</button>
       </div>
 
       {/* Impact Score */}
@@ -59,7 +59,7 @@ export default function SegmentPanel({ segment, open, onClose }: Props) {
             {segment.impact_gbm.toFixed(3)}
           </div>
           <div style={{ flex: 1 }}>
-            <div className="impact-bar" style={{ height: 10 }}>
+            <div className="impact-bar" style={{ height: 10 }} role="meter" aria-label="Impact score" aria-valuenow={Math.round(segment.impact_gbm * 100)} aria-valuemin={0} aria-valuemax={100}>
               <div
                 className="impact-bar-fill"
                 style={{
@@ -91,7 +91,7 @@ export default function SegmentPanel({ segment, open, onClose }: Props) {
                   {item.value.toFixed(3)}
                 </span>
               </div>
-              <div className="impact-bar">
+              <div className="impact-bar" role="meter" aria-label={`${item.label} score`} aria-valuenow={Math.round(item.value * 100)} aria-valuemin={0} aria-valuemax={100}>
                 <div
                   className="impact-bar-fill"
                   style={{
@@ -159,12 +159,12 @@ export default function SegmentPanel({ segment, open, onClose }: Props) {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn btn-primary" style={{ flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <button className="btn btn-primary" style={{ flex: 1 }} aria-label={`Run What-If enforcement on ${segment.road_name || 'this segment'}`}>
+          <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           What-If: Enforce
         </button>
-        <button className="btn btn-secondary" style={{ flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <button className="btn btn-secondary" style={{ flex: 1 }} aria-label={`View risk profile for ${segment.road_name || 'this segment'}`}>
+          <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Risk Profile
         </button>
       </div>

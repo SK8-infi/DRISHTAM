@@ -47,13 +47,16 @@ export default function StationsPage() {
         </div>
 
         {/* Filters */}
-        <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", display: "flex", gap: "8px", overflowX: "auto" }}>
+        <div style={{ padding: "16px 24px", borderBottom: "1px solid var(--border)", display: "flex", gap: "8px", overflowX: "auto" }} role="tablist" aria-label="Filter by division">
           {DIVISIONS.map((div) => (
             <button
               key={div}
+              role="tab"
+              aria-selected={division === div}
+              aria-label={`Filter by ${div} division`}
               onClick={() => {
                 setDivision(div);
-                setSelectedStation(null); // Reset selection on filter change
+                setSelectedStation(null);
               }}
               style={{
                 padding: "6px 14px",
@@ -77,12 +80,12 @@ export default function StationsPage() {
         {/* Station Cards List */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", fontSize: "14px" }}>
-              <div className="spinner" style={{ margin: "0 auto 16px auto" }} />
+            <div role="status" aria-live="polite" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)", fontSize: "14px" }}>
+              <div className="spinner" aria-hidden="true" style={{ margin: "0 auto 16px auto" }} />
               Loading stations...
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }} role="list" aria-label="Police stations">
               {stations.map((stn) => {
                 const isSelected = selectedStation === stn.station_name;
                 const divColor = getDivisionColor(stn.division);
@@ -91,7 +94,12 @@ export default function StationsPage() {
                   <div
                     key={stn.station_name}
                     className="card"
+                    role="listitem"
+                    tabIndex={0}
+                    aria-label={`${stn.station_name}, ${stn.division} division, ${stn.violations.toLocaleString()} violations, mean risk ${stn.mean_pis.toFixed(1)}`}
+                    aria-selected={isSelected}
                     onClick={() => handleStationClick(stn.station_name)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleStationClick(stn.station_name)}
                     style={{
                       padding: "16px",
                       cursor: "pointer",

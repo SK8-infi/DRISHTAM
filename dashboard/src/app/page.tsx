@@ -12,14 +12,14 @@ import Sparkline from "@/components/Charts/Sparkline";
 import ParetoDonut from "@/components/Charts/ParetoDonut";
 
 const Icons = {
-  Car: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H8.3a2 2 0 0 0-1.6.8L4 11l-5.16.86a1 1 0 0 0-.84.99V16h3m10 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0zM7 16a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"/></svg>,
-  Road: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 22-8-3v-5l8 3 8-3v5l-8 3z"/><path d="m20 14-8-3-8 3"/><path d="M12 2v10"/><path d="m4 6 8-3 8 3"/></svg>,
-  Money: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>,
-  House: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Alert: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-  Brain: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
-  Impact: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>,
-  ArrowRight: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  Car: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H8.3a2 2 0 0 0-1.6.8L4 11l-5.16.86a1 1 0 0 0-.84.99V16h3m10 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0zM7 16a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"/></svg>,
+  Road: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 22-8-3v-5l8 3 8-3v5l-8 3z"/><path d="m20 14-8-3-8 3"/><path d="M12 2v10"/><path d="m4 6 8-3 8 3"/></svg>,
+  Money: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>,
+  House: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Alert: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  Brain: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>,
+  Impact: <svg aria-hidden="true" focusable="false" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>,
+  ArrowRight: <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
 };
 
 export default function OverviewPage() {
@@ -33,8 +33,8 @@ export default function OverviewPage() {
     queryFn: () => fetchStations(),
   });
 
-  if (isLoading) return <div className="loading"><div className="spinner" />Loading AI engines...</div>;
-  if (error || !data) return <div className="loading">Failed to connect to AI Core</div>;
+  if (isLoading) return <div className="loading" role="status" aria-live="polite"><div className="spinner" aria-hidden="true" />Loading AI engines...</div>;
+  if (error || !data) return <div className="loading" role="alert">Failed to connect to AI Core</div>;
 
   const hourlyDataArray = Object.values(data.hourly_distribution);
   const getSparklineData = (index: number) => {
@@ -52,7 +52,7 @@ export default function OverviewPage() {
   return (
     <div className="animate-in">
       {/* Enforcement Gap Callout Banner */}
-      <div style={{
+      <div role="alert" aria-label="Intelligence insight: optimal patrol reallocation" style={{
         background: "rgba(139, 92, 246, 0.1)",
         border: "1px solid rgba(139, 92, 246, 0.3)",
         borderRadius: "var(--radius-sm)",
@@ -64,7 +64,7 @@ export default function OverviewPage() {
         boxShadow: "0 4px 12px rgba(139, 92, 246, 0.05)"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ color: "#a78bfa" }}>{Icons.Brain}</div>
+          <div aria-hidden="true" style={{ color: "#a78bfa" }}>{Icons.Brain}</div>
           <div style={{ color: "var(--text-primary)", fontSize: "14px" }}>
             <strong style={{ color: "#a78bfa", fontSize: "15px" }}>Intelligence Insight: Optimal Patrol Reallocation</strong>
             <span style={{ color: "var(--text-secondary)", marginLeft: "8px" }}>— Deploying during 4-8 PM mitigates {data.enforcement_gap.pct_of_total}% of high-impact violations.</span>
@@ -76,7 +76,7 @@ export default function OverviewPage() {
       </div>
 
       <div className="page-header" style={{ marginBottom: "24px" }}>
-        <h2>Dashboard Overview</h2>
+        <h2 id="page-title">Dashboard Overview</h2>
         <p>Real-time enforcement intelligence powered by 3 ML engines</p>
       </div>
 
@@ -92,8 +92,8 @@ export default function OverviewPage() {
               <AnimatedCounter targetValue={data.estimated_cost_crore_per_day} prefix="₹" suffix="Cr" />
             </div>
             <div style={{ fontSize: "14px", color: "var(--text-muted)", marginTop: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{ width: 8, height: 8, background: "var(--success)", borderRadius: "50%", boxShadow: "0 0 8px var(--success)" }} />
-              Live computation active
+              <div aria-hidden="true" style={{ width: 8, height: 8, background: "var(--success)", borderRadius: "50%", boxShadow: "0 0 8px var(--success)" }} />
+              <span>Live computation active</span>
             </div>
           </div>
         </div>
@@ -105,23 +105,23 @@ export default function OverviewPage() {
       </div>
 
       {/* System Status Row */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "40px" }}>
+      <div role="status" aria-label="Engine status indicators" style={{ display: "flex", gap: "16px", marginBottom: "40px" }}>
         {[
           { name: "Engine 1: Impact", status: "LIVE", color: "var(--info)" },
           { name: "Engine 2: What-If", status: "LIVE", color: "var(--accent)" },
           { name: "Engine 3: Risk r=0.92", status: "LIVE", color: "var(--warning)" }
         ].map((engine, i) => (
-          <div key={i} style={{
+          <div key={i} role="status" aria-label={`${engine.name}: ${engine.status}`} style={{
             display: "flex", alignItems: "center", gap: "8px", 
             padding: "6px 12px", background: "var(--bg-elevated)", 
             borderRadius: "100px", border: "1px solid var(--border)",
             fontSize: "12px", fontWeight: 600, color: "var(--text-secondary)"
           }}>
             <div style={{ color: engine.color, display: "flex", alignItems: "center", gap: "6px" }}>
-              <div style={{ width: 6, height: 6, background: engine.color, borderRadius: "50%", boxShadow: `0 0 6px ${engine.color}` }} />
+              <div aria-hidden="true" style={{ width: 6, height: 6, background: engine.color, borderRadius: "50%", boxShadow: `0 0 6px ${engine.color}` }} />
               {engine.status}
             </div>
-            <span style={{ color: "var(--border-light)" }}>|</span>
+            <span aria-hidden="true" style={{ color: "var(--border-light)" }}>|</span>
             <span style={{ color: "var(--text-primary)" }}>{engine.name}</span>
           </div>
         ))}
@@ -130,8 +130,8 @@ export default function OverviewPage() {
       {/* Division KPI Row */}
       {stations && (
         <div style={{ marginBottom: "40px" }}>
-          <h3 style={{ fontSize: "16px", marginBottom: "16px", color: "var(--text-primary)" }}>Division Performance</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
+          <h3 id="division-heading" style={{ fontSize: "16px", marginBottom: "16px", color: "var(--text-primary)" }}>Division Performance</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }} role="list" aria-labelledby="division-heading">
             {["East", "West", "North", "South"].map(div => {
               const divStations = stations.filter(s => s.division === div);
               const violations = divStations.reduce((sum, s) => sum + s.violations, 0);
@@ -143,7 +143,7 @@ export default function OverviewPage() {
               if (div === "South") color = "#a855f7";
 
               return (
-                <div key={div} className="card" style={{ padding: "16px", borderTop: `4px solid ${color}` }}>
+                <div key={div} className="card" role="listitem" aria-label={`${div} Division: ${formatNumber(violations)} violations, mean risk ${avgPis.toFixed(2)}`} style={{ padding: "16px", borderTop: `4px solid ${color}` }}>
                   <div style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px", color: "var(--text-primary)" }}>{div} Division</div>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
                     <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Stations</span>
@@ -190,7 +190,7 @@ export default function OverviewPage() {
                 <div className="card-title" style={{ marginBottom: "8px" }}>{kpi.label}</div>
                 <div className="card-value" style={{ fontSize: "28px" }}>{kpi.value}</div>
               </div>
-              <div className="kpi-icon" style={{ margin: 0, width: 36, height: 36 }}>{kpi.icon}</div>
+              <div className="kpi-icon" aria-hidden="true" style={{ margin: 0, width: 36, height: 36 }}>{kpi.icon}</div>
             </div>
             {/* Sparkline from API Data */}
             <div style={{ marginTop: "12px" }}>
@@ -203,8 +203,8 @@ export default function OverviewPage() {
 
       <div className="charts-grid">
         <div className="card" style={{ gridColumn: "span 2" }}>
-          <div className="card-title">Hourly Violation Distribution</div>
-          <div style={{ marginTop: '16px' }}>
+          <div className="card-title" id="hourly-chart-label">Hourly Violation Distribution</div>
+          <div style={{ marginTop: '16px' }} role="img" aria-labelledby="hourly-chart-label">
             <HourlyChart data={data.hourly_distribution} gapHours={data.enforcement_gap.hours} />
           </div>
         </div>
@@ -214,8 +214,8 @@ export default function OverviewPage() {
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px", marginTop: "24px" }}>
         
         <div className="card">
-          <div className="card-title">Top 10 Roads by Impact</div>
-          <div style={{ marginTop: '16px' }}>
+          <div className="card-title" id="top-roads-label">Top 10 Roads by Impact</div>
+          <div style={{ marginTop: '16px' }} role="region" aria-labelledby="top-roads-label">
             <TopRoadsTable roads={data.top_roads} />
           </div>
         </div>

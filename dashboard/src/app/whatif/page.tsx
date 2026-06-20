@@ -226,6 +226,8 @@ function WhatIfContent() {
                 <button
                   key={s.id}
                   onClick={() => runScenario(s)}
+                  aria-label={`${s.title}: ${s.subtitle}`}
+                  aria-pressed={activeScenario === s.id}
                   style={{
                     padding: "10px",
                     background: activeScenario === s.id ? `${s.accent}15` : "var(--bg-elevated)",
@@ -252,6 +254,7 @@ function WhatIfContent() {
             </div>
             <select
               value={selectedStation}
+              aria-label="Constrain simulation to a specific police station"
               onChange={(e) => {
                 setSelectedStation(e.target.value);
                 setActiveScenario(null);
@@ -283,6 +286,7 @@ function WhatIfContent() {
               placeholder="Search roads..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search roads by name"
               style={{
                 width: "100%", padding: "8px 12px", background: "var(--bg-elevated)",
                 border: "1px solid var(--border)", borderRadius: "6px",
@@ -299,6 +303,10 @@ function WhatIfContent() {
                 <span
                   key={road}
                   onClick={() => toggleRoad(road)}
+                  role="button"
+                  aria-label={`Remove ${road} from selection`}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleRoad(road)}
                   style={{
                     padding: "3px 8px", borderRadius: 100, fontSize: 10, fontWeight: 600,
                     background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa", cursor: "pointer",
@@ -317,6 +325,11 @@ function WhatIfContent() {
               <div
                 key={road}
                 onClick={() => toggleRoad(road)}
+                role="checkbox"
+                aria-checked={selectedRoads.includes(road)}
+                aria-label={`Select ${road}`}
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && toggleRoad(road)}
                 style={{
                   padding: "8px 16px", cursor: "pointer", fontSize: 12,
                   borderBottom: "1px solid var(--border)",
@@ -344,6 +357,7 @@ function WhatIfContent() {
           <div style={{ padding: "12px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
             <button
               onClick={runCustom}
+              aria-label={selectedStation ? `Run patrol optimization for ${selectedStation}` : `Run What-If simulation on ${selectedRoads.length} selected roads`}
               disabled={(!selectedStation && selectedRoads.length === 0) || mutation.isPending || stationMutation.isPending}
               style={{
                 width: "100%", padding: "10px", borderRadius: "8px",
@@ -386,7 +400,7 @@ function WhatIfContent() {
           borderLeft: "1px solid var(--border)",
           display: "flex", flexDirection: "column",
           overflow: "hidden",
-        }}>
+        }} role="region" aria-label="Simulation results" aria-live="polite">
           {!result && !stationResult ? (
             <div style={{
               flex: 1, display: "flex", alignItems: "center", justifyContent: "center",

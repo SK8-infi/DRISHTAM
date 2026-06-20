@@ -33,24 +33,24 @@ export default function ClusterPanel({ clusterId, open, onClose }: Props) {
   })) : [];
 
   return (
-    <div className={`segment-panel ${open ? "open" : ""}`}>
+    <div className={`segment-panel ${open ? "open" : ""}`} role="dialog" aria-label={`Cluster ${clusterId} detail`} aria-modal="false">
       <div className="segment-panel-header">
         <div>
           <h3 style={{ fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             Cluster #{clusterId}
           </h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
             {detail?.n_violations || 0} violations · {detail?.radius_m.toFixed(0) || 0}m radius
           </p>
         </div>
-        <button className="segment-panel-close" onClick={onClose}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <button className="segment-panel-close" onClick={onClose} aria-label="Close cluster detail panel">
+          <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       {isLoading && (
-        <div style={{ padding: "40px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "12px" }}>
+        <div role="status" aria-live="polite" style={{ padding: "40px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "12px" }}>
           Loading cluster details...
         </div>
       )}
@@ -133,8 +133,8 @@ export default function ClusterPanel({ clusterId, open, onClose }: Props) {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8, marginTop: "8px" }}>
-            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleWhatIf}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleWhatIf} aria-label={`Run What-If enforcement on cluster ${clusterId}`}>
+              <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               What-If: Enforce Cluster
             </button>
           </div>

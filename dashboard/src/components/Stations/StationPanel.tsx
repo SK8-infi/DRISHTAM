@@ -23,9 +23,10 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
     <>
       <div 
         style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} 
-        onClick={onClose} 
+        onClick={onClose}
+        aria-hidden="true"
       />
-      <div style={{
+      <div role="dialog" aria-label={`Station detail: ${stationName}`} aria-modal="true" style={{
         position: "fixed",
         top: 0, right: 0, bottom: 0,
         width: "450px",
@@ -46,13 +47,13 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
               {detail?.division || "Loading..."} Division
             </span>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "20px" }}>&times;</button>
+          <button onClick={onClose} aria-label="Close station detail" style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "20px" }}>&times;</button>
         </div>
 
         {/* Content */}
         <div style={{ padding: "24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "24px" }}>
           {loading || !detail ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>Loading details...</div>
+            <div role="status" aria-live="polite" style={{ textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>Loading details...</div>
           ) : (
             <>
               {/* KPIs */}
@@ -75,7 +76,7 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
                     const val = detail.hourly_profile[h.toString()] || 0;
                     const pct = (val / maxProfile) * 100;
                     return (
-                      <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", position: "relative" }} title={`Hour ${h}: ${val}`}>
+                      <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", position: "relative" }} aria-label={`Hour ${h}: ${val} violations`} role="img">
                         <div style={{ width: "100%", height: `${pct}%`, background: "var(--accent)", borderRadius: "2px 2px 0 0", opacity: pct > 80 ? 1 : 0.6 }} />
                         {h % 6 === 0 && <span style={{ position: "absolute", bottom: "-20px", fontSize: "10px", color: "var(--text-muted)", left: 0 }}>{h}h</span>}
                       </div>
@@ -91,9 +92,9 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: "60%" }}>Road</th>
-                      <th style={{ textAlign: "right" }}>Count</th>
-                      <th style={{ textAlign: "right" }}>PIS</th>
+                      <th scope="col" style={{ width: "60%" }}>Road</th>
+                      <th scope="col" style={{ textAlign: "right" }}>Count</th>
+                      <th scope="col" style={{ textAlign: "right" }}>PIS</th>
                     </tr>
                   </thead>
                   <tbody>
