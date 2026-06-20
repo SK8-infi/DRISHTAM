@@ -11,12 +11,15 @@ from __future__ import annotations
 import logging
 import os
 import time
+import traceback
 import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse
 
 from api.engine_loader import engines
 from api.routers import clusters, insights, optimizer, overview, risk, segments, stations, violations, whatif
@@ -56,6 +59,55 @@ app = FastAPI(
     redoc_url=None if IS_PROD else "/redoc",
     openapi_url=None if IS_PROD else "/openapi.json",
 )
+
+# ── Maximum request body size (10 MB) ────────────────────────
+MAX_BODY_SIZE = int(os.environ.get("DRISHTAM_MAX_BODY_SIZE", str(10 * 1024 * 1024)))
+
+
+# ── Global Exception Handlers ────────────────────────────────
+# Prevent stack traces from leaking to clients in production.
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch unhandled exceptions — log full trace, return safe message."""
+    request_id = request.headers.get("X-Request-ID", "unknown")
+    logger.error(
+        f"Unhandled exception [request_id={request_id}]: {exc}"
+    )
+    if not IS_PROD:
+        # In development, include traceback for debugging
+        tb = traceback.format_exc()
+        logger.error(tb)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": str(exc), "traceback": tb},
+        )
+    # In production, return generic message (no internal details)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Return clean validation errors without internal details."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": [
+                {
+                    "field": ".".join(str(loc) for loc in err.get("loc", [])),
+                    "message": err.get("msg", "Invalid value"),
+                    "type": err.get("type", "value_error"),
+                }
+                for err in exc.errors()
+            ],
+        },
+    )
 
 
 # ── Security Middleware Stack ────────────────────────────────
@@ -122,22 +174,47 @@ async def security_headers(request: Request, call_next) -> Response:
 
 # 4. Simple rate limiter middleware (in-memory, per-IP)
 _rate_store: dict[str, list[float]] = {}
+_rate_store_cleanup_counter = 0
 RATE_LIMIT_WINDOW = 60  # seconds
 RATE_LIMIT_MAX = int(os.environ.get("DRISHTAM_RATE_LIMIT", "120"))  # requests per window
+RATE_STORE_MAX_IPS = 10_000  # Max tracked IPs to prevent memory exhaustion
 
 
 @app.middleware("http")
 async def rate_limiter(request: Request, call_next) -> Response:
-    """Simple sliding-window rate limiter per client IP."""
+    """Sliding-window rate limiter per client IP with memory bounds."""
     # Skip rate limiting for health checks
     if request.url.path == "/health":
         return await call_next(request)
+
+    # Enforce request body size limit
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_BODY_SIZE:
+        return Response(
+            content='{"detail":"Request body too large"}',
+            status_code=413,
+            media_type="application/json",
+        )
 
     client_ip = request.client.host if request.client else "unknown"
     now = time.time()
     cutoff = now - RATE_LIMIT_WINDOW
 
-    # Clean old entries and check count
+    # Periodic cleanup: evict stale IPs every 100 requests to bound memory
+    global _rate_store_cleanup_counter
+    _rate_store_cleanup_counter += 1
+    if _rate_store_cleanup_counter >= 100:
+        _rate_store_cleanup_counter = 0
+        stale_ips = [ip for ip, ts in _rate_store.items() if not ts or ts[-1] < cutoff]
+        for ip in stale_ips:
+            del _rate_store[ip]
+        # Hard cap: if still too many IPs, drop oldest half
+        if len(_rate_store) > RATE_STORE_MAX_IPS:
+            sorted_ips = sorted(_rate_store.keys(), key=lambda ip: _rate_store[ip][-1] if _rate_store[ip] else 0)
+            for ip in sorted_ips[:len(sorted_ips) // 2]:
+                del _rate_store[ip]
+
+    # Clean old entries for this IP and check count
     if client_ip not in _rate_store:
         _rate_store[client_ip] = []
     _rate_store[client_ip] = [t for t in _rate_store[client_ip] if t > cutoff]

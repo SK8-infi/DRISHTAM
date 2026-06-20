@@ -223,10 +223,20 @@ class StationOptimizeRequest(BaseModel):
     n_officers: int = Field(default=50, ge=1, le=500)
     shifts: int = Field(default=3, ge=1, le=6)
     hours_per_shift: int = Field(default=2, ge=1, le=8)
-    station: str | None = None      # optimize for a single station
-    division: str | None = None     # optimize within a division
-    proportional: bool = True       # distribute officers proportional to station impact
+    station: str | None = Field(default=None, max_length=100)
+    division: str | None = Field(default=None, pattern=r"^(East|West|North|South)$")
+    proportional: bool = True
     custom_allocation: dict[str, int] | None = None  # custom mapping of station_name -> n_officers
+
+    @field_validator("custom_allocation")
+    @classmethod
+    def validate_allocation(cls, v: dict[str, int] | None) -> dict[str, int] | None:
+        """Cap allocation entries to prevent abuse."""
+        if v is None:
+            return v
+        if len(v) > 60:  # max 54 stations + margin
+            raise ValueError("custom_allocation cannot have more than 60 entries")
+        return {k[:100]: max(0, min(v_val, 500)) for k, v_val in v.items()}
 
 
 # ── Clusters ──────────────────────────────────────────────────
