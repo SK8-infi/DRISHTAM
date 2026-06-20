@@ -1,0 +1,54 @@
+# ── DRISHTAM Docker Ignore ───────────────────────────────────
+# Prevent sensitive/unnecessary files from entering the Docker build context.
+
+# Version control
+.git
+.gitignore
+
+# Environment files (NEVER bake secrets into images)
+.env
+.env.*
+!.env.example
+
+# Python caches
+__pycache__
+*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+*.egg-info
+
+# Virtual environments
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+
+# Data (downloaded from GCS at runtime)
+data/
+models/
+
+# Dashboard (separate build)
+dashboard/node_modules
+dashboard/.next
+dashboard/out
+
+# Archive & research (not needed at runtime)
+archive/
+research/
+plans/
+scripts/
+*.csv
+*.md
+!README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gemini / AI
+.gemini/

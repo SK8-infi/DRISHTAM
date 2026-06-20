@@ -1,8 +1,4 @@
-"""DRISHTAM API — Pydantic response schemas."""
-
-from __future__ import annotations
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ── Shared ────────────────────────────────────────────────────
@@ -112,9 +108,16 @@ class SegmentsResponse(BaseModel):
 # ── What-If ───────────────────────────────────────────────────
 
 class WhatIfRequest(BaseModel):
-    road_names: list[str] = []
-    seg_indices: list[int] = []  # If provided, enforce only these specific segments
-    action: str = "enforce"
+    road_names: list[str] = Field(default=[], max_length=50)
+    seg_indices: list[int] = Field(default=[], max_length=5000)
+    action: str = Field(default="enforce", pattern=r"^(enforce|remove)$")
+
+    @field_validator("road_names")
+    @classmethod
+    def validate_road_names(cls, v: list[str]) -> list[str]:
+        """Sanitize road names — strip whitespace, reject excessively long strings."""
+        return [name.strip()[:200] for name in v if name.strip()]
+
 
 
 class ImprovedSegment(BaseModel):
