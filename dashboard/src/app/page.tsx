@@ -4,11 +4,15 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchOverview, fetchStations } from "@/lib/api";
 import { formatNumber } from "@/lib/colors";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import HourlyChart from "@/components/Charts/HourlyChart";
 import TopRoadsTable from "@/components/Charts/TopRoadsTable";
 import AnimatedCounter from "@/components/AnimatedCounter";
-import MiniMapPulse from "@/components/MiniMapPulse";
+const MiniMapPulse = dynamic(() => import("@/components/MiniMapPulse"), {
+  ssr: false,
+  loading: () => <div style={{ height: 140, background: "#080808", borderRadius: "var(--radius)" }} />,
+});
 import Sparkline from "@/components/Charts/Sparkline";
 import ParetoDonut from "@/components/Charts/ParetoDonut";
 

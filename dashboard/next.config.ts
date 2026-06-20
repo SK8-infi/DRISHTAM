@@ -26,8 +26,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               // MapMyIndia / Leaflet tiles + API backend
-              "img-src 'self' data: blob: https://*.mappls.com https://*.openstreetmap.org https://tile.openstreetmap.org",
-              "connect-src 'self' http://localhost:8000 https://*.mappls.com",
+              "img-src 'self' data: blob: https://*.mappls.com https://*.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com",
+              "connect-src 'self' http://localhost:8000 https://*.mappls.com https://*.basemaps.cartocdn.com",
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
             ].join("; "),

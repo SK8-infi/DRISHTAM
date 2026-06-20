@@ -1,17 +1,40 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+/** Lightweight Leaflet mini-map for the dashboard overview. */
+function MiniMapInner() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
-export default function MiniMapPulse() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
 
-  if (!mounted) return <div style={{ height: 140, background: "#080808", borderRadius: "var(--radius)" }} />;
+    const map = L.map(containerRef.current, {
+      center: [12.9716, 77.5946],
+      zoom: 12,
+      zoomControl: false,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      attributionControl: false,
+      keyboard: false,
+      touchZoom: false,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
 
   return (
     <div className="mini-map-container" role="img" aria-label="Live map of Bengaluru city center" style={{
@@ -23,20 +46,7 @@ export default function MiniMapPulse() {
       background: "#080808",
       border: "1px solid var(--border)"
     }}>
-      <MapContainer 
-        center={[12.9716, 77.5946]} 
-        zoom={12} 
-        zoomControl={false} 
-        dragging={false} 
-        scrollWheelZoom={false}
-        doubleClickZoom={false}
-        attributionControl={false}
-        style={{ height: "100%", width: "100%", zIndex: 0 }}
-      >
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-      </MapContainer>
+      <div ref={containerRef} style={{ height: "100%", width: "100%", zIndex: 0 }} />
 
       {/* Pulsing City Center */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 10, pointerEvents: "none" }}>
@@ -89,3 +99,5 @@ export default function MiniMapPulse() {
     </div>
   );
 }
+
+export default MiniMapInner;
