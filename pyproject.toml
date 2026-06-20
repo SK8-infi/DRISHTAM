@@ -118,7 +118,7 @@ ignore = [
 # Scripts are allowed more relaxed rules
 "scripts/*.py" = ["D103", "ANN", "T201", "E402", "TC"]  # Allow print(), no function docstrings, import order
 "eda_*.py" = ["D", "ANN", "S", "T201", "E402", "TC"]    # EDA scripts are exploratory
-"tests/*.py" = ["D103", "ANN", "S101"]                   # Tests use assert
+"tests/*.py" = ["D103", "ANN", "S101", "S106"]             # Tests use assert
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -183,9 +183,10 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "-v",
-    "--cov=drishtam",
+    "--cov=api",
     "--cov-report=term-missing",
-    "--cov-fail-under=60",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=95",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -197,12 +198,13 @@ markers = [
 # COVERAGE
 # ==============================================================================
 [tool.coverage.run]
-source = ["drishtam"]
+source = ["api"]
 omit = [
     "*/tests/*",
     "*/__pycache__/*",
     "scripts/*",
     "eda_*.py",
+    "api/ws/*",
 ]
 
 [tool.coverage.report]

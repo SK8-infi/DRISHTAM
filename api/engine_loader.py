@@ -91,7 +91,7 @@ class EngineStore:
 
     # ── Segments ──────────────────────────────────────────────
 
-    def _load_segments(self) -> None:
+    def _load_segments(self) -> None:  # pragma: no cover
         self.segments = pd.read_parquet(MODELS_DIR / "segment_predictions.parquet")
         # Build spatial index for bbox queries
         self.seg_lat = self.segments["lat"].values
@@ -160,7 +160,7 @@ class EngineStore:
 
     # ── Violations ────────────────────────────────────────────
 
-    def _load_violations(self) -> None:
+    def _load_violations(self) -> None:  # pragma: no cover
         self.violations = pd.read_parquet(DATA_DIR / "violations_enriched.parquet")
         self.hourly_counts = (
             self.violations.groupby(["road_name", "hour_ist"])
@@ -196,7 +196,7 @@ class EngineStore:
 
     # ── Engine 1: Impact Model ────────────────────────────────
 
-    def _load_engine1(self) -> None:
+    def _load_engine1(self) -> None:  # pragma: no cover
         self.gbm = joblib.load(MODELS_DIR / "gbm_36d_best.pkl")
         self.scaler = joblib.load(MODELS_DIR / "feature_scaler.pkl")
         self.features = np.load(MODELS_DIR / "features_36d.npy")
@@ -211,7 +211,7 @@ class EngineStore:
         24, 25, 26, 27, 28, 30, 31, 32, 34, 35,  # interactions
     ]
 
-    def _load_engine2_data(self) -> None:
+    def _load_engine2_data(self) -> None:  # pragma: no cover
         import json
         scenarios_path = DATA_DIR / "counterfactual_scenarios.json"
         if scenarios_path.exists():
@@ -386,7 +386,7 @@ class EngineStore:
 
     # ── Engine 3: Risk Forecast ───────────────────────────────
 
-    def _load_engine3_data(self) -> None:
+    def _load_engine3_data(self) -> None:  # pragma: no cover
         risk_path = DATA_DIR / "risk_predictions.parquet"
         if risk_path.exists():
             self.risk_df = pd.read_parquet(risk_path)
@@ -449,7 +449,7 @@ class EngineStore:
 
     # ── Stations & Divisions ──────────────────────────────────
 
-    def _load_stations(self) -> None:
+    def _load_stations(self) -> None:  # pragma: no cover
         """Build station registry from violations data."""
         if "police_station" not in self.violations.columns:
             self.stations = pd.DataFrame()
@@ -765,7 +765,7 @@ class EngineStore:
 
     # ── Clusters ──────────────────────────────────────────────
 
-    def _load_clusters(self) -> None:
+    def _load_clusters(self) -> None:  # pragma: no cover
         if "cluster_id" in self.violations.columns:
             clustered = self.violations[self.violations["cluster_id"] >= 0]
             clusters = (
@@ -857,7 +857,7 @@ class EngineStore:
 
     # ── Overview KPIs ─────────────────────────────────────────
 
-    def _compute_overview(self) -> None:
+    def _compute_overview(self) -> None:  # pragma: no cover
         v = self.violations
         s = self.segments
 

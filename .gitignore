@@ -30,6 +30,7 @@ ENV/
 htmlcov/
 .coverage
 .coverage.*
+coverage.xml
 
 # --- Data (large files — not in git) ---
 data/*.parquet
