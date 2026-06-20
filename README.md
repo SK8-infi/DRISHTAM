@@ -331,56 +331,35 @@ The What-If engine doesn't just show "impact reduced." It computes and returns *
 
 ## Data Pipeline
 
-```
-Raw Violations CSV (298K × 25)
-        │
-        ▼
-┌─────────────────────────────┐
-│ 01_build_enriched_data.py   │  ← Road matching, PIS scoring, temporal encoding
-│ → violations_enriched.parquet│     HDBSCAN clustering, proximity features
-│   (298K × 87 features)      │     87 engineered features
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 02_compute_impact_scores.py │  ← PIS computation, graph propagation
-│ → propagated_impact.parquet │     GAT neural network training
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 03b_simulate_traffic.py     │  ← Frank-Wolfe UE, BPR functions
-│ → simulation/baseline_flows │     80-zone OD matrix
-│ → simulation/delay_metrics  │     6-hour simulation
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 03c_retrain_gnn_twin.py     │  ← GBM-36D training on sim labels
-│ (run in Colab with GPU)     │     GPU betweenness centrality
-│ → models/gbm_36d_best.pkl   │     Feature engineering + model sweep
-│ → models/features_36d.npy   │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 04_train_forecaster.py      │  ← 27 model experiments
-│ → risk_forecaster_best.pkl  │     Feature ablation + blending
-│ → risk_predictions.parquet  │     Hourly risk maps
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 05_generate_counterfactuals │  ← 12 enforcement scenarios
-│ → counterfactual_scenarios  │     Monotonicity verification
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│ 06_optimize_enforcement.py  │  ← Greedy officer allocation
-│ → enforcement_schedule.json │     Spatial exclusion zones
-│ → fleet_comparison.json     │     Fleet size comparison
-└─────────────────────────────┘
+```mermaid
+flowchart TD
+    RAW[(Raw Violations CSV\n298K x 25 columns)]
+
+    S1[01_build_enriched_data.py\nRoad matching, PIS scoring, temporal encoding\nHDBSCAN clustering, proximity features]
+    O1[/violations_enriched.parquet\n298K x 87 features/]
+
+    S2[02_compute_impact_scores.py\nPIS computation, graph propagation\nGAT neural network training]
+    O2[/propagated_impact.parquet/]
+
+    S3[03b_simulate_traffic.py\nFrank-Wolfe UE, BPR functions\n80-zone OD matrix, 6-hour simulation]
+    O3[/simulation/baseline_flows\nsimulation/delay_metrics/]
+
+    S4[03c_retrain_gnn_twin.py\nGBM-36D training on sim labels\nGPU betweenness centrality]
+    O4[/gbm_36d_best.pkl\nfeatures_36d.npy/]
+    GPU{{Requires GPU - Colab}}
+
+    S5[04_train_forecaster.py\n27 model experiments\nFeature ablation + blending]
+    O5[/risk_forecaster_best.pkl\nrisk_predictions.parquet/]
+
+    S6[05_generate_counterfactuals.py\n12 enforcement scenarios\nMonotonicity verification]
+    O6[/counterfactual_scenarios.json/]
+
+    S7[06_optimize_enforcement.py\nGreedy allocation + spatial exclusion\nFleet size comparison]
+    O7[/enforcement_schedule.json\nfleet_comparison.json/]
+
+    RAW --> S1 --> O1 --> S2 --> O2 --> S3 --> O3 --> S4
+    GPU -.-> S4
+    S4 --> O4 --> S5 --> O5 --> S6 --> O6 --> S7 --> O7
 ```
 
 ---
