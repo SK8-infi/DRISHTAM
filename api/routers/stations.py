@@ -41,6 +41,7 @@ async def optimize_by_station(req: StationOptimizeRequest) -> dict:
         division=req.division,
         proportional=req.proportional,
         custom_allocation=req.custom_allocation,
+        min_officer_spacing_m=req.min_officer_spacing_m,
     )
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])

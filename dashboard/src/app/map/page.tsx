@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useDebounce } from "@/lib/useDebounce";
 import {
   fetchSegments,
@@ -28,10 +29,16 @@ const Icons = {
   Stations: <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
 };
 
-export default function MapPage() {
-  const [mode, setMode] = useState<MapMode>("impact");
+function MapPageContent() {
+  const searchParams = useSearchParams();
+  const initMode = (searchParams.get("mode") as MapMode) || "impact";
+  const initMinImpact = parseFloat(searchParams.get("min_impact") || "0.1");
+
+  const [mode, setMode] = useState<MapMode>(
+    ["impact", "risk", "patrol"].includes(initMode) ? initMode : "impact"
+  );
   const [bbox, setBbox] = useState(DEFAULT_BBOX);
-  const [minImpact, setMinImpact] = useState(0.1);
+  const [minImpact, setMinImpact] = useState(isNaN(initMinImpact) ? 0.1 : initMinImpact);
   const [maxImpact, setMaxImpact] = useState(1.0);
   const [numOfficers, setNumOfficers] = useState(50);
   const [currentHour, setCurrentHour] = useState(9); // Default to morning peak
@@ -514,7 +521,20 @@ export default function MapPage() {
         segment={selectedSeg}
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
+        onSwitchToRisk={() => { setMode("risk"); setPanelOpen(false); }}
       />
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+        Loading map...
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }

@@ -1,0 +1,28 @@
+#!include:.gitignore
+
+# ── Large directories NOT needed for API Docker build ─────────
+.venv/
+data/
+models/
+archive/
+dashboard/
+research/
+notebooks/
+htmlcov/
+plans/
+scripts/
+
+# ── Caches ────────────────────────────────────────────────────
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+
+# ── Dev files ─────────────────────────────────────────────────
+.git/
+.env
+.coverage
+*.egg-info/
+*.md
+*.ipynb

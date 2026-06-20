@@ -33,6 +33,44 @@ logger = logging.getLogger(__name__)
 
 MODELS_DIR = PROJECT_ROOT / "models"
 
+# Default minimum spacing between officers in the same time block (meters).
+# Based on Bengaluru traffic police patrol zones — each officer can effectively
+# monitor ~500m of road corridor.
+DEFAULT_OFFICER_SPACING_M = 500.0
+
+# Earth radius in meters (WGS-84 mean)
+_EARTH_RADIUS_M = 6_371_000.0
+
+
+def haversine_distance_m(
+    lat1: float | np.ndarray,
+    lon1: float | np.ndarray,
+    lat2: float | np.ndarray,
+    lon2: float | np.ndarray,
+) -> float | np.ndarray:
+    """Compute Haversine distance in meters between two (lat, lon) points.
+
+    Supports both scalar and vectorized (numpy array) inputs for efficient
+    pairwise distance computation during patrol optimization.
+
+    Args:
+        lat1: Latitude of point(s) 1 in decimal degrees.
+        lon1: Longitude of point(s) 1 in decimal degrees.
+        lat2: Latitude of point(s) 2 in decimal degrees.
+        lon2: Longitude of point(s) 2 in decimal degrees.
+
+    Returns:
+        Distance in meters (scalar or array matching input shape).
+    """
+    lat1_r = np.radians(lat1)
+    lat2_r = np.radians(lat2)
+    dlat = np.radians(lat2 - lat1)
+    dlon = np.radians(lon2 - lon1)
+
+    a = np.sin(dlat / 2) ** 2 + np.cos(lat1_r) * np.cos(lat2_r) * np.sin(dlon / 2) ** 2
+    c = 2 * np.arcsin(np.sqrt(a))
+    return _EARTH_RADIUS_M * c
+
 
 @dataclass
 class PatrolAssignment:
@@ -213,6 +251,7 @@ class EnforcementOptimizer:
         n_officers: int = 50,
         shifts_per_officer: int = 3,
         hours_per_shift: int = 2,
+        min_officer_spacing_m: float = DEFAULT_OFFICER_SPACING_M,
     ) -> EnforcementSchedule:
         """Solve the officer allocation problem using greedy algorithm.
 
@@ -220,16 +259,24 @@ class EnforcementOptimizer:
         hours each. Greedy: assign each shift to the (road, hour_block)
         with highest remaining ROI.
 
+        A spatial exclusion zone ensures no two officers are assigned to
+        roads within `min_officer_spacing_m` meters of each other in the
+        same time block — each officer can effectively monitor their
+        surrounding area without overlap.
+
         Args:
             n_officers: number of enforcement officers available
             shifts_per_officer: number of shifts per officer per day
             hours_per_shift: hours per shift
+            min_officer_spacing_m: minimum distance (meters) between any
+                two officers in the same time block. Set to 0 to disable.
 
         Returns:
             EnforcementSchedule with optimal assignments
         """
         logger.info(f"\n{'='*60}")
         logger.info(f"OPTIMIZING: {n_officers} officers × {shifts_per_officer} shifts × {hours_per_shift}h")
+        logger.info(f"  Spatial exclusion radius: {min_officer_spacing_m:.0f}m")
         logger.info(f"{'='*60}")
 
         total_shifts = n_officers * shifts_per_officer
@@ -243,11 +290,29 @@ class EnforcementOptimizer:
             h_end = h_start + hours_per_shift
             block_roi[:, b] = self.roi_matrix[:, h_start:h_end].sum(axis=1)
 
+        # Pre-compute road locations and pairwise distance matrix for
+        # spatial exclusion zone constraint
+        road_lats = np.array([self.seg_lookup[r]["lat"] for r in self.road_names])
+        road_lons = np.array([self.seg_lookup[r]["lon"] for r in self.road_names])
+
+        # Pairwise distance matrix (n_roads × n_roads) — computed once
+        # Uses broadcasting: dist[i, j] = haversine(road_i, road_j)
+        dist_matrix: np.ndarray | None = None
+        if min_officer_spacing_m > 0:
+            dist_matrix = haversine_distance_m(
+                road_lats[:, np.newaxis],
+                road_lons[:, np.newaxis],
+                road_lats[np.newaxis, :],
+                road_lons[np.newaxis, :],
+            )
+
         # Track assignments and used capacity
-        np.zeros((n_roads, n_blocks), dtype=bool)
         # Diminishing returns: each additional officer on same road-block
         # gets less benefit (violations already deterred)
         assignment_count = np.zeros((n_roads, n_blocks), dtype=int)
+
+        # Spatial exclusion: track which road indices are assigned per block
+        block_assigned_roads: dict[int, list[int]] = {b: [] for b in range(n_blocks)}
 
         assignments: list[PatrolAssignment] = []
         officer_schedules: dict[int, list[int]] = {i: [] for i in range(n_officers)}
@@ -266,6 +331,17 @@ class EnforcementOptimizer:
                 officer_mask[:, prev_block] = False
 
             effective_roi = effective_roi * officer_mask
+
+            # Spatial exclusion mask: for each block, mask out roads that
+            # are within min_officer_spacing_m of any already-assigned road
+            if dist_matrix is not None and min_officer_spacing_m > 0:
+                spatial_mask = np.ones((n_roads, n_blocks), dtype=bool)
+                for b in range(n_blocks):
+                    for assigned_road_idx in block_assigned_roads[b]:
+                        # Roads too close to this assigned road are masked out
+                        too_close = dist_matrix[assigned_road_idx, :] < min_officer_spacing_m
+                        spatial_mask[too_close, b] = False
+                effective_roi = effective_roi * spatial_mask
 
             # Find best (road, block)
             if effective_roi.max() <= 0:
@@ -301,6 +377,7 @@ class EnforcementOptimizer:
             # Update state
             assignment_count[best_road_idx, best_block_idx] += 1
             officer_schedules[officer_id].append(best_block_idx)
+            block_assigned_roads[best_block_idx].append(int(best_road_idx))
 
             if (shift_num + 1) % 25 == 0 or shift_num < 5:
                 logger.info(

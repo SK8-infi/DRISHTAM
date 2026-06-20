@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   transpilePackages: ["leaflet", "react-leaflet"],
 
   // ── Security Headers ──────────────────────────────────────
@@ -26,8 +27,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               // MapMyIndia / Leaflet tiles + API backend
-              "img-src 'self' data: blob: https://*.mappls.com https://*.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com",
-              "connect-src 'self' http://localhost:8000 https://*.mappls.com https://*.basemaps.cartocdn.com",
+              `img-src 'self' data: blob: https://*.mappls.com https://*.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com`,
+              `connect-src 'self' http://localhost:8000 ${process.env.NEXT_PUBLIC_API_URL || ""} https://*.mappls.com https://*.basemaps.cartocdn.com https://*.run.app`,
               "worker-src 'self' blob:",
               "frame-ancestors 'none'",
             ].join("; "),

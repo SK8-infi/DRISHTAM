@@ -374,3 +374,42 @@ class TestStations:
             },
         )
         assert r.status_code == 200
+
+    def test_station_optimize_with_spacing(self, client):
+        """Test optimization with custom officer spacing."""
+        r = client.post(
+            "/api/optimize/station",
+            json={"n_officers": 10, "min_officer_spacing_m": 750.0},
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert data["min_officer_spacing_m"] == 750.0
+
+    def test_station_optimize_spacing_zero(self, client):
+        """Setting spacing to 0 disables the constraint."""
+        r = client.post(
+            "/api/optimize/station",
+            json={"n_officers": 5, "min_officer_spacing_m": 0},
+        )
+        assert r.status_code == 200
+
+    def test_station_optimize_spacing_too_large(self, client):
+        """Spacing > 5000m should be rejected by validation."""
+        r = client.post(
+            "/api/optimize/station",
+            json={"n_officers": 5, "min_officer_spacing_m": 10000},
+        )
+        assert r.status_code == 422
+
+    def test_station_optimize_spacing_negative(self, client):
+        """Negative spacing should be rejected by validation."""
+        r = client.post(
+            "/api/optimize/station",
+            json={"n_officers": 5, "min_officer_spacing_m": -100},
+        )
+        assert r.status_code == 422
+
+    def test_optimize_default_includes_spacing(self, client):
+        """Global optimize endpoint also supports spacing param."""
+        r = client.post("/api/optimize", json={"min_officer_spacing_m": 500})
+        assert r.status_code == 200

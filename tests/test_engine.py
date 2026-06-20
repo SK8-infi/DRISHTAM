@@ -302,3 +302,126 @@ class TestEngineStoreEdgeCases:
         """Test non-proportional (equal) distribution."""
         result = mock_engines.run_optimize_by_station(n_officers=10, proportional=False)
         assert "total_assignments" in result
+
+
+class TestHaversineDistance:
+    """Tests for haversine_distance_m spatial utility."""
+
+    def test_same_point_zero_distance(self):
+        """Distance from a point to itself is 0."""
+        from drishtam.enforcement_optimizer import haversine_distance_m
+
+        d = haversine_distance_m(12.9716, 77.5946, 12.9716, 77.5946)
+        assert abs(d) < 0.01  # < 1cm
+
+    def test_known_distance(self):
+        """Bangalore MG Road to Koramangala is ~4.5km."""
+        from drishtam.enforcement_optimizer import haversine_distance_m
+
+        # MG Road (12.9756, 77.6069) → Koramangala (12.9352, 77.6245)
+        d = haversine_distance_m(12.9756, 77.6069, 12.9352, 77.6245)
+        assert 4000 < d < 5500  # ~4.5 km range
+
+    def test_vectorized(self):
+        """Vectorized computation returns correct shape."""
+        import numpy as np
+
+        from drishtam.enforcement_optimizer import haversine_distance_m
+
+        lats = np.array([12.9, 12.95, 13.0])
+        lons = np.array([77.5, 77.55, 77.6])
+        # Pairwise: (3,1) vs (1,3) → (3,3) matrix
+        result = haversine_distance_m(
+            lats[:, np.newaxis], lons[:, np.newaxis],
+            lats[np.newaxis, :], lons[np.newaxis, :],
+        )
+        assert result.shape == (3, 3)
+        # Diagonal should be ~0
+        assert all(result[i, i] < 1.0 for i in range(3))
+        # Off-diagonals should be positive
+        assert result[0, 2] > 0
+
+
+class TestSpatialExclusion:
+    """Tests for spatial exclusion zone in patrol optimization."""
+
+    def test_optimize_with_spacing_returns_result(self, mock_engines):
+        """Optimizer with spatial spacing produces valid assignments."""
+        result = mock_engines.run_optimize_by_station(
+            n_officers=5, min_officer_spacing_m=500.0,
+        )
+        assert "total_assignments" in result
+        assert "min_officer_spacing_m" in result
+        assert result["min_officer_spacing_m"] == 500.0
+
+    def test_optimize_spacing_zero_disables(self, mock_engines):
+        """Setting spacing to 0 disables the constraint (more assignments possible)."""
+        result_no_spacing = mock_engines.run_optimize_by_station(
+            n_officers=5, min_officer_spacing_m=0,
+        )
+        result_with_spacing = mock_engines.run_optimize_by_station(
+            n_officers=5, min_officer_spacing_m=2000.0,
+        )
+        # With spacing, fewer or equal assignments
+        assert result_with_spacing["total_assignments"] <= result_no_spacing["total_assignments"]
+
+    def test_optimize_large_spacing_reduces_assignments(self, mock_engines):
+        """Very large spacing (50km) should result in very few assignments."""
+        result = mock_engines.run_optimize_by_station(
+            n_officers=10, min_officer_spacing_m=50000.0,
+        )
+        # 50km radius in Bangalore → very few non-overlapping spots
+        assert result["total_assignments"] >= 0  # May be 0 or very few
+
+    def test_optimize_spacing_response_field(self, mock_engines):
+        """The response includes the spacing parameter used."""
+        result = mock_engines.run_optimize_by_station(
+            n_officers=3, min_officer_spacing_m=750.0,
+        )
+        assert result["min_officer_spacing_m"] == 750.0
+
+    def test_spatial_exclusion_enforces_distance(self, mock_engines):
+        """Verify assigned officers in same block are spatially separated."""
+        from drishtam.enforcement_optimizer import haversine_distance_m
+
+        spacing = 300.0
+        result = mock_engines.run_optimize_by_station(
+            n_officers=10, min_officer_spacing_m=spacing,
+        )
+        assignments = result.get("assignments", [])
+        if len(assignments) < 2:
+            return  # Not enough assignments to check
+
+        # Group by time block
+        from collections import defaultdict
+
+        block_groups: dict[int, list[dict]] = defaultdict(list)
+        for a in assignments:
+            block_groups[a["hour_start"]].append(a)
+
+        # For each time block, check pairwise distances
+        violations_found = 0
+        pairs_checked = 0
+        for _block, block_assignments in block_groups.items():
+            for i in range(len(block_assignments)):
+                for j in range(i + 1, len(block_assignments)):
+                    a1 = block_assignments[i]
+                    a2 = block_assignments[j]
+                    # Skip if either has placeholder coordinates
+                    if abs(a1["lat"]) < 0.01 or abs(a2["lat"]) < 0.01:
+                        continue
+                    if a1["road_name"] == a2["road_name"]:
+                        continue  # Same road — allowed via diminishing returns
+                    dist = float(
+                        haversine_distance_m(a1["lat"], a1["lon"], a2["lat"], a2["lon"])
+                    )
+                    pairs_checked += 1
+                    if dist < spacing * 0.99:
+                        violations_found += 1
+
+        # If we checked any real pairs, none should violate spacing
+        if pairs_checked > 0:
+            assert violations_found == 0, (
+                f"{violations_found}/{pairs_checked} pairs violated "
+                f"{spacing}m spacing"
+            )

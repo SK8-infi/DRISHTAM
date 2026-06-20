@@ -17,7 +17,7 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
       .finally(() => setLoading(false));
   }, [stationName]);
 
-  const maxProfile = detail ? Math.max(...Object.values(detail.hourly_profile)) : 1;
+
 
   return (
     <>
@@ -71,19 +71,33 @@ export default function StationPanel({ stationName, onClose }: { stationName: st
               {/* Hourly Profile */}
               <div>
                 <h4 style={{ margin: "0 0 16px 0", fontSize: "14px", color: "var(--text-muted)" }}>24H Violation Profile</h4>
-                <div style={{ display: "flex", alignItems: "flex-end", height: "80px", gap: "2px" }}>
-                  {Array.from({ length: 24 }).map((_, h) => {
-                    const val = detail.hourly_profile[h.toString()] || 0;
-                    const pct = (val / maxProfile) * 100;
-                    return (
-                      <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", position: "relative" }} aria-label={`Hour ${h}: ${val} violations`} role="img">
-                        <div style={{ width: "100%", height: `${pct}%`, background: "var(--accent)", borderRadius: "2px 2px 0 0", opacity: pct > 80 ? 1 : 0.6 }} />
-                        {h % 6 === 0 && <span style={{ position: "absolute", bottom: "-20px", fontSize: "10px", color: "var(--text-muted)", left: 0 }}>{h}h</span>}
+                {(() => {
+                  const hp = detail.hourly_profile;
+                  const values = Array.from({ length: 24 }, (_, h) => Number(hp[h.toString()] ?? hp[String(h)] ?? 0));
+                  const maxVal = Math.max(1, ...values);
+                  const barHeight = 80; // px
+                  return (
+                    <>
+                      <div style={{ display: "flex", alignItems: "flex-end", height: `${barHeight}px`, gap: "2px" }}>
+                        {values.map((val, h) => {
+                          const px = Math.round((val / maxVal) * barHeight);
+                          return (
+                            <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%", position: "relative" }} aria-label={`Hour ${h}: ${val} violations`} role="img">
+                              <div style={{ width: "100%", height: `${px}px`, background: "var(--accent)", borderRadius: "2px 2px 0 0", opacity: px > barHeight * 0.8 ? 1 : 0.6 }} />
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-                <div style={{ height: "20px" }} />
+                      <div style={{ display: "flex", marginTop: "4px" }}>
+                        {values.map((_, h) => (
+                          <div key={h} style={{ flex: 1, textAlign: "left" }}>
+                            {h % 6 === 0 && <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{h}h</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Top Roads Table */}

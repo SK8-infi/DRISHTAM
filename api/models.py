@@ -228,6 +228,12 @@ class OptimizeRequest(BaseModel):
     n_officers: int = Field(default=50, ge=1, le=500)
     shifts: int = Field(default=3, ge=1, le=6)
     hours_per_shift: int = Field(default=2, ge=1, le=8)
+    min_officer_spacing_m: float = Field(
+        default=500.0,
+        ge=0,
+        le=5000,
+        description="Minimum spacing between officers in the same time block (meters).",
+    )
 
 
 # ── Stations & Divisions ─────────────────────────────────────
@@ -271,6 +277,12 @@ class StationOptimizeRequest(BaseModel):
     n_officers: int = Field(default=50, ge=1, le=500)
     shifts: int = Field(default=3, ge=1, le=6)
     hours_per_shift: int = Field(default=2, ge=1, le=8)
+    min_officer_spacing_m: float = Field(
+        default=500.0,
+        ge=0,
+        le=5000,
+        description="Minimum spacing between officers in the same time block (meters).",
+    )
     station: str | None = Field(default=None, max_length=100)
     division: str | None = Field(default=None, pattern=r"^(East|West|North|South)$")
     proportional: bool = True

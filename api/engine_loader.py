@@ -656,12 +656,30 @@ class EngineStore:
         division: str | None = None,
         proportional: bool = True,
         custom_allocation: dict[str, int] | None = None,
+        min_officer_spacing_m: float = 500.0,
     ) -> dict:
         """Division/station-constrained patrol optimization.
 
         Unlike the global optimizer, this ensures officers are allocated
         within their administrative boundaries.
+
+        A spatial exclusion zone ensures no two officers are assigned to
+        roads within `min_officer_spacing_m` meters of each other in the
+        same time block, so each officer covers a distinct patrol area.
+
+        Args:
+            n_officers: Total number of officers to allocate.
+            shifts: Number of shifts per officer per day.
+            hours_per_shift: Hours per shift.
+            station: Optional single station to optimize for.
+            division: Optional division filter (East/West/North/South).
+            proportional: If True, allocate officers proportional to PIS.
+            custom_allocation: Optional custom station → officer count map.
+            min_officer_spacing_m: Minimum distance (meters) between any
+                two officers in the same time block. Set to 0 to disable.
         """
+        from drishtam.enforcement_optimizer import haversine_distance_m
+
         # Determine which stations are in scope
         if station:
             target_stations = [station]
@@ -766,7 +784,22 @@ class EngineStore:
                     prob_sum = sum(prob_matrix_dict.get(road, {}).get(h, 0) for h in range(h_start, h_end))
                     block_roi[i, b] = prob_sum * impact
 
-            # Greedy assignment with diminishing returns
+            # Pre-compute pairwise distance matrix for spatial exclusion
+            stn_dist_matrix: np.ndarray | None = None
+            if min_officer_spacing_m > 0 and n_roads > 1:
+                stn_lats = np.array([road_loc.get(r, (0.0, 0.0))[0] for r in roads])
+                stn_lons = np.array([road_loc.get(r, (0.0, 0.0))[1] for r in roads])
+                stn_dist_matrix = haversine_distance_m(
+                    stn_lats[:, np.newaxis],
+                    stn_lons[:, np.newaxis],
+                    stn_lats[np.newaxis, :],
+                    stn_lons[np.newaxis, :],
+                )
+
+            # Track spatial assignments per block
+            block_assigned_roads: dict[int, list[int]] = {b: [] for b in range(n_blocks)}
+
+            # Greedy assignment with diminishing returns + spatial exclusion
             assignment_count = np.zeros((n_roads, n_blocks), dtype=int)
             officer_schedules: dict[int, list[int]] = {(officer_id_counter + j): [] for j in range(stn_n_officers)}
             stn_assignments = []
@@ -782,6 +815,15 @@ class EngineStore:
                 for prev_block in current_shifts:
                     officer_mask[:, prev_block] = False
                 effective_roi = effective_roi * officer_mask
+
+                # Spatial exclusion mask
+                if stn_dist_matrix is not None and min_officer_spacing_m > 0:
+                    spatial_mask = np.ones((n_roads, n_blocks), dtype=bool)
+                    for b in range(n_blocks):
+                        for assigned_road_idx in block_assigned_roads[b]:
+                            too_close = stn_dist_matrix[assigned_road_idx, :] < min_officer_spacing_m
+                            spatial_mask[too_close, b] = False
+                    effective_roi = effective_roi * spatial_mask
 
                 if effective_roi.max() <= 0:
                     break
@@ -809,6 +851,7 @@ class EngineStore:
                 stn_assignments.append(assignment)
 
                 assignment_count[best_road_idx, best_block_idx] += 1
+                block_assigned_roads[best_block_idx].append(best_road_idx)
                 if oid in officer_schedules:
                     officer_schedules[oid].append(best_block_idx)
 
@@ -845,6 +888,7 @@ class EngineStore:
             "station_filter": station,
             "division_filter": division,
             "proportional": proportional,
+            "min_officer_spacing_m": min_officer_spacing_m,
             "total_assignments": len(all_assignments),
             "total_roi": round(sum(a["expected_roi"] for a in all_assignments), 2),
             "unique_roads": len({a["road_name"] for a in all_assignments}),
@@ -1117,8 +1161,8 @@ class EngineStore:
                     ),
                     "source": "Risk Forecaster (27 Experiments)",
                     "severity": "success",
-                    "link_page": "/risk",
-                    "link_params": "",
+                    "link_page": "/map",
+                    "link_params": "mode=risk",
                 }
             )
 

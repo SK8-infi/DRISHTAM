@@ -8,9 +8,10 @@ interface Props {
   segment: SegmentDetail | null;
   open: boolean;
   onClose: () => void;
+  onSwitchToRisk?: () => void;
 }
 
-export default function SegmentPanel({ segment, open, onClose }: Props) {
+export default function SegmentPanel({ segment, open, onClose, onSwitchToRisk }: Props) {
   if (!segment) return null;
 
   const hourlyData = Array.from({ length: 24 }, (_, h) => ({
@@ -159,11 +160,26 @@ export default function SegmentPanel({ segment, open, onClose }: Props) {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn btn-primary" style={{ flex: 1 }} aria-label={`Run What-If enforcement on ${segment.road_name || 'this segment'}`}>
+        <button
+          className="btn btn-primary"
+          style={{ flex: 1 }}
+          aria-label={`Run What-If enforcement on ${segment.road_name || 'this segment'}`}
+          onClick={() => {
+            const road = encodeURIComponent(segment.road_name || "");
+            window.location.href = `/whatif?road=${road}`;
+          }}
+        >
           <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           What-If: Enforce
         </button>
-        <button className="btn btn-secondary" style={{ flex: 1 }} aria-label={`View risk profile for ${segment.road_name || 'this segment'}`}>
+        <button
+          className="btn btn-secondary"
+          style={{ flex: 1 }}
+          aria-label={`View risk profile for ${segment.road_name || 'this segment'}`}
+          onClick={() => {
+            if (onSwitchToRisk) onSwitchToRisk();
+          }}
+        >
           <svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Risk Profile
         </button>

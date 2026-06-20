@@ -61,7 +61,9 @@ import { useSearchParams } from "next/navigation";
 
 function WhatIfContent() {
   const searchParams = useSearchParams();
-  const initRoads = searchParams.get("roads")?.split(",").filter(Boolean) || [];
+  const singleRoad = searchParams.get("road");
+  const multiRoads = searchParams.get("roads")?.split(",").filter(Boolean) || [];
+  const initRoads = singleRoad ? [singleRoad] : multiRoads;
   const initStation = searchParams.get("station") || "";
 
   const [search, setSearch] = useState("");
