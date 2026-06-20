@@ -271,7 +271,7 @@ function WhatIfContent() {
               }}
             >
               <option value="">Global (All Stations)</option>
-              {stationsData?.map((stn: any) => (
+              {stationsData?.map((stn) => (
                 <option key={stn.station_name} value={stn.station_name}>
                   {stn.station_name} ({stn.division})
                 </option>
@@ -382,7 +382,7 @@ function WhatIfContent() {
         <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
           <PropagationMap 
             result={stationResult ? {
-              road_names: [...new Set(stationResult.assignments.map((a: any) => a.road_name))],
+              road_names: [...new Set(stationResult.assignments.map((a: Record<string, string>) => a.road_name))],
               segments_affected: stationResult.total_assignments,
               violations_removed: 0,
               baseline_impact: 0,
@@ -433,12 +433,12 @@ function WhatIfContent() {
 
               <h4 style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "12px", textTransform: "uppercase" }}>Allocated Roads</h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {stationResult.assignments.map((a: any, i: number) => (
+                {stationResult.assignments.map((a: Record<string, unknown>, i: number) => (
                   <div key={i} style={{ padding: "12px", background: "rgba(255,255,255,0.05)", borderRadius: "8px", border: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px" }}>{a.road_name}</div>
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "4px" }}>{String(a.road_name)}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)" }}>
-                      <span>Officer ID: {a.officer_id}</span>
-                      <span style={{ color: "var(--success)" }}>ROI: {a.expected_roi}</span>
+                      <span>Officer ID: {String(a.officer_id)}</span>
+                      <span style={{ color: "var(--success)" }}>ROI: {String(a.expected_roi)}</span>
                     </div>
                   </div>
                 ))}

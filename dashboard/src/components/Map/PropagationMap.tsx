@@ -82,10 +82,11 @@ export default function PropagationMap({ result, onAreaSelected }: Props) {
     map.addControl(drawControl);
     drawControlRef.current = drawControl;
 
-    // Handle draw events
-    map.on(L.Draw.Event.CREATED, (e: any) => {
+    // Handle draw events — use LeafletEvent + assertion since @types/leaflet-draw
+    // doesn't perfectly align with leaflet's event handler signature
+    map.on(L.Draw.Event.CREATED, (e: L.LeafletEvent) => {
       drawnItems.clearLayers();
-      const layer = e.layer;
+      const layer = (e as L.DrawEvents.Created).layer as L.Polygon;
       drawnItems.addLayer(layer);
 
       // Extract bounds and polygon vertices
@@ -98,7 +99,7 @@ export default function PropagationMap({ result, onAreaSelected }: Props) {
       };
 
       let polygon: [number, number][] = [];
-      if (layer.getLatLngs) {
+      if ('getLatLngs' in layer) {
         const latlngs = layer.getLatLngs();
         // Polygons return nested arrays
         const points = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;

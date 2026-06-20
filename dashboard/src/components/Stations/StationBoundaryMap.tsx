@@ -64,7 +64,7 @@ export default function StationBoundaryMap({ stations, selectedStation, onStatio
       const polygonPoints = voronoi.cellPolygon(i);
       if (polygonPoints) {
         // convert [lon, lat] back to [lat, lon] for Leaflet
-        const latlngs = Array.from(polygonPoints).map((p: any) => [p[1], p[0]] as [number, number]);
+        const latlngs = Array.from(polygonPoints).map((p: [number, number]) => [p[1], p[0]] as [number, number]);
         
         const poly = L.polygon(latlngs, {
           color: color,

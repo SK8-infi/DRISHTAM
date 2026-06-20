@@ -182,7 +182,10 @@ export interface WhatIfResult {
 }
 
 export function runWhatIf(roadNames: string[], segIndices?: number[]): Promise<WhatIfResult> {
-  const body: any = { road_names: roadNames, action: "enforce" };
+  const body: { road_names: string[]; action: string; seg_indices?: number[] } = {
+    road_names: roadNames,
+    action: "enforce",
+  };
   if (segIndices && segIndices.length > 0) {
     body.seg_indices = segIndices;
   }
@@ -196,8 +199,22 @@ export function fetchWhatIfRoads(q = ""): Promise<{ roads: string[] }> {
   return apiFetch<{ roads: string[] }>(`/api/whatif/roads?q=${encodeURIComponent(q)}&limit=20`);
 }
 
-export function fetchPredefinedScenarios(): Promise<any> {
-  return apiFetch<any>("/api/whatif/scenarios");
+/** Predefined counterfactual scenario. */
+export interface PredefinedScenario {
+  name: string;
+  road_names: string[];
+  segments_affected: number;
+  impact_reduction: number;
+  pct_reduction: number;
+}
+
+export interface ScenariosResponse {
+  scenarios: PredefinedScenario[];
+  metadata: Record<string, string>;
+}
+
+export function fetchPredefinedScenarios(): Promise<ScenariosResponse> {
+  return apiFetch<ScenariosResponse>("/api/whatif/scenarios");
 }
 
 /* ── Risk ──────────────────────────────────────────────── */
@@ -230,14 +247,33 @@ export function fetchRiskAnimation(
   return apiFetch(`/api/risk/animation?hour_start=${hourStart}&hour_end=${hourEnd}&top_n=${topN}`);
 }
 
-/* ── Optimizer ─────────────────────────────────────────── */
+/** Optimizer result from the patrol fleet optimizer. */
+export interface PatrolAssignment {
+  officer_id: number;
+  road_name: string;
+  seg_idx: number;
+  hour_start: number;
+  hour_end: number;
+  lat: number;
+  lon: number;
+  expected_roi: number;
+  violation_prob: number;
+  impact_score: number;
+}
+
+export interface OptimizeResult {
+  n_officers: number;
+  shifts: number;
+  schedule?: Record<string, unknown>;
+  fleet_comparison?: Record<string, unknown>;
+}
 
 export function runOptimize(
   nOfficers = 50,
   shifts = 3,
   hoursPerShift = 2
-): Promise<any> {
-  return apiFetch("/api/optimize", {
+): Promise<OptimizeResult> {
+  return apiFetch<OptimizeResult>("/api/optimize", {
     method: "POST",
     body: JSON.stringify({
       n_officers: nOfficers,
@@ -246,8 +282,6 @@ export function runOptimize(
     }),
   });
 }
-
-// Removed duplicate runStationOptimize
 
 /* ── Clusters ──────────────────────────────────────────── */
 
@@ -388,20 +422,42 @@ export interface StationOptimizeRequest {
   custom_allocation?: Record<string, number>;
 }
 
-export function runStationOptimize(req: StationOptimizeRequest): Promise<any> {
-  return apiFetch("/api/optimize/station", {
+/** Station optimize result. */
+export interface StationOptimizeResult {
+  total_assignments: number;
+  total_roi?: number;
+  assignments: Record<string, unknown>[];
+  station_results?: Record<string, unknown>;
+  division_summary?: Record<string, unknown>;
+  error?: string;
+}
+
+export function runStationOptimize(req: StationOptimizeRequest): Promise<StationOptimizeResult> {
+  return apiFetch<StationOptimizeResult>("/api/optimize/station", {
     method: "POST",
     body: JSON.stringify(req),
   });
 }
 
-/* ── Violations ────────────────────────────────────────── */
+/** Violation record from the API. */
+export interface ViolationRecord {
+  id: number | string;
+  latitude: number;
+  longitude: number;
+  road_name: string;
+  violation_type: string;
+  vehicle_type_clean: string;
+  hour_ist: number;
+  pis: number;
+  capacity_blocked_pct: number;
+  violation_severity: number;
+}
 
 export function fetchViolations(
   roadName?: string,
   hour?: number,
   limit = 50
-): Promise<{ count: number; violations: any[] }> {
+): Promise<{ count: number; violations: ViolationRecord[] }> {
   const params = new URLSearchParams({ limit: limit.toString() });
   if (roadName) params.set("road_name", roadName);
   if (hour !== undefined) params.set("hour", hour.toString());

@@ -17,10 +17,10 @@ Usage:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -36,7 +36,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 
-from drishtam.config import DATA_DIR, ENRICHED_DATA_PATH, PROJECT_ROOT
+from drishtam.config import ENRICHED_DATA_PATH, PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -489,10 +489,8 @@ class RiskForecaster:
             if r.features == "all_27" and r.model is not None:
                 needs_s = r.name in ("MLP", "Ridge")
                 Xte = X_test_s if needs_s else X_test
-                try:
+                with contextlib.suppress(Exception):
                     model_preds[r.name] = r.model.predict(Xte)
-                except Exception:
-                    pass
 
         sorted_models = sorted(
             model_preds.items(),
@@ -527,7 +525,7 @@ class RiskForecaster:
 
             weights = np.array([abs(spearmanr(p, y_test)[0]) for _, p in sorted_models[:3]])
             weights /= weights.sum()
-            blend_w = sum(w * p for w, (_, p) in zip(weights, sorted_models[:3]))
+            blend_w = sum(w * p for w, (_, p) in zip(weights, sorted_models[:3], strict=False))
             rw, _ = spearmanr(blend_w, y_test)
             results.append(ModelResult(
                 name="Blend-Weighted", features="blend_weighted", n_features=X.shape[1],

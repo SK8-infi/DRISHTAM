@@ -3,14 +3,14 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { type SegmentLight } from "@/lib/api";
+import { type SegmentLight, type RiskSegment, type PatrolAssignment } from "@/lib/api";
 import { impactToColor } from "@/lib/colors";
 
 interface Props {
   mode: "impact" | "risk" | "patrol";
   segments: SegmentLight[];
-  riskSegments?: any[];
-  patrolAssignments?: any[];
+  riskSegments?: RiskSegment[];
+  patrolAssignments?: PatrolAssignment[];
   onSegmentClick?: (seg: SegmentLight) => void;
   onMapMove?: (bbox: { lat_min: number; lat_max: number; lon_min: number; lon_max: number }) => void;
 }

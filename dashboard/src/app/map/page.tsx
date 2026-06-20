@@ -11,6 +11,7 @@ import {
   fetchStations,
   type SegmentLight,
   type SegmentDetail,
+  type PatrolAssignment,
 } from "@/lib/api";
 import SegmentPanel from "@/components/Map/SegmentPanel";
 import dynamic from "next/dynamic";
@@ -120,9 +121,9 @@ export default function MapPage() {
     const assignments = patrolData?.assignments || [];
     if (!assignments.length) return [];
     
-    return assignments.filter((a: any) => 
-      currentHour >= parseInt(a.hour_start) && 
-      currentHour < parseInt(a.hour_end)
+    return assignments.filter((a) => 
+      currentHour >= Number(a.hour_start) && 
+      currentHour < Number(a.hour_end)
     );
   };
 
@@ -137,9 +138,9 @@ export default function MapPage() {
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <SegmentMap
           mode={mode}
-          segments={(segData?.segments || []).filter((s: any) => s.impact_gbm >= minImpact && s.impact_gbm <= maxImpact)}
+          segments={(segData?.segments || []).filter((s) => s.impact_gbm >= minImpact && s.impact_gbm <= maxImpact)}
           riskSegments={getRiskSegments()}
-          patrolAssignments={getPatrolAssignments()}
+          patrolAssignments={getPatrolAssignments() as unknown as PatrolAssignment[]}
           onSegmentClick={handleSegmentClick}
           onMapMove={handleMapMove}
         />
@@ -459,7 +460,7 @@ export default function MapPage() {
                     Specify exactly how many officers to assign to individual stations. Stations with 0 are ignored.
                   </div>
                   <div style={{ maxHeight: "250px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px", paddingRight: "4px" }}>
-                    {stationsList?.map((stn: any) => (
+                    {stationsList?.map((stn) => (
                       <div key={stn.station_name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.02)", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--border)" }}>
                         <span style={{ fontSize: "12px", color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "160px" }} title={stn.station_name}>
                           {stn.station_name}

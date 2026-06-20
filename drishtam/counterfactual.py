@@ -12,10 +12,8 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import joblib
@@ -23,7 +21,6 @@ import numpy as np
 import pandas as pd
 
 from drishtam.config import (
-    DATA_DIR,
     ENRICHED_DATA_PATH,
     PROJECT_ROOT,
 )

@@ -1176,7 +1176,7 @@ def generate_auto_zones(
     # Count nodes per cell and find centroid
     from collections import defaultdict
     cell_nodes: dict[tuple[int, int], list[int]] = defaultdict(list)
-    for i, (li, lo) in enumerate(zip(lat_idx, lon_idx)):
+    for i, (li, lo) in enumerate(zip(lat_idx, lon_idx, strict=False)):
         cell_nodes[(li, lo)].append(i)
 
     # Create zones for cells with enough nodes
@@ -1284,7 +1284,7 @@ def get_combined_zones(
     filtered_auto_nodes = []
     overlap_count = 0
 
-    for zone, node_id in zip(auto_zones, auto_node_ids):
+    for zone, node_id in zip(auto_zones, auto_node_ids, strict=False):
         dist, _ = landmark_tree.query([zone["lat"], zone["lon"]])
         if dist > 0.002:  # ~200m in degrees
             filtered_auto_zones.append(zone)

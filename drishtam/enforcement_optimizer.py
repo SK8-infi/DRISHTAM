@@ -23,8 +23,6 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -102,7 +100,7 @@ class EnforcementOptimizer:
     def _load_engine2(self) -> None:
         """Engine 2: Counterfactual reduction per road."""
         scenarios_path = DATA_DIR / "counterfactual_scenarios.json"
-        with open(scenarios_path) as f:
+        with scenarios_path.open() as f:
             data = json.load(f)
 
         self.baseline_impact = data["metadata"]["baseline_impact"]
@@ -246,7 +244,7 @@ class EnforcementOptimizer:
             block_roi[:, b] = self.roi_matrix[:, h_start:h_end].sum(axis=1)
 
         # Track assignments and used capacity
-        assigned = np.zeros((n_roads, n_blocks), dtype=bool)
+        np.zeros((n_roads, n_blocks), dtype=bool)
         # Diminishing returns: each additional officer on same road-block
         # gets less benefit (violations already deterred)
         assignment_count = np.zeros((n_roads, n_blocks), dtype=int)
@@ -328,8 +326,8 @@ class EnforcementOptimizer:
             hourly_officers[h] = len(hour_assignments)
 
         # Coverage
-        covered_roads = len(set(a.road_name for a in assignments))
-        covered_hours = len(set(h for a in assignments for h in range(a.hour_start, a.hour_end)))
+        covered_roads = len({a.road_name for a in assignments})
+        covered_hours = len({h for a in assignments for h in range(a.hour_start, a.hour_end)})
 
         # Random baseline: what if officers were randomly assigned?
         rng = np.random.RandomState(42)
@@ -437,7 +435,7 @@ class EnforcementOptimizer:
             "peak_assignments": len(peak_assignments),
             "total_assignments": schedule.total_assignments,
             "pct_peak": round(100 * len(peak_assignments) / max(len(schedule.assignments), 1), 1),
-            "peak_roads": list(set(a.road_name for a in peak_assignments)),
+            "peak_roads": list({a.road_name for a in peak_assignments}),
             "peak_roi": sum(a.expected_roi for a in peak_assignments),
         }
 

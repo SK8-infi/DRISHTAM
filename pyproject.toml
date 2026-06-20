@@ -119,6 +119,8 @@ ignore = [
 "scripts/*.py" = ["D103", "ANN", "T201", "E402", "TC"]  # Allow print(), no function docstrings, import order
 "eda_*.py" = ["D", "ANN", "S", "T201", "E402", "TC"]    # EDA scripts are exploratory
 "tests/*.py" = ["D101", "D102", "D103", "D107", "ANN", "S101", "S106", "S108", "SIM117", "E402", "PERF401"]
+# ML library uses uppercase variable names (matrices, parameters) and f-string logging in research code
+"drishtam/*.py" = ["N803", "N806", "G004", "G003", "SIM105", "S110", "B905", "D107", "C401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

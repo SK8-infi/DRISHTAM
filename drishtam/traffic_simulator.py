@@ -106,7 +106,7 @@ def prepare_network_for_assignment(
     a sparse adjacency matrix for Dijkstra shortest paths.
 
     Args:
-        G: OSM road network graph (MultiDiGraph).
+        graph: OSM road network graph (MultiDiGraph).
         violation_impacts: Optional dict mapping (u, v, key) → capacity_blocked_pct.
             If provided, reduces effective capacity by this percentage.
 
@@ -605,7 +605,7 @@ def simulate_24h(
         Dict with hourly flows, travel times, V/C ratios, and metrics.
     """
     from drishtam.config import SIMULATION_HOURS
-    from drishtam.traffic_zones import get_all_demands_at_hour, get_demand_at_hour
+    from drishtam.traffic_zones import get_all_demands_at_hour
 
     if hours is None:
         hours = SIMULATION_HOURS
