@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["stations"])
 
 
 @router.get("/stations")
-async def list_stations(division: str | None = None):
+async def list_stations(division: str | None = None) -> list[dict]:
     """Return all 54 traffic police stations with summary stats.
 
     Optional ?division=East filter.
@@ -18,7 +18,7 @@ async def list_stations(division: str | None = None):
 
 
 @router.get("/station/{station_name}")
-async def station_detail(station_name: str):
+async def station_detail(station_name: str) -> dict:
     """Full drill-down for a single station."""
     result = engines.get_station_detail(station_name)
     if result is None:
@@ -27,7 +27,7 @@ async def station_detail(station_name: str):
 
 
 @router.post("/optimize/station")
-async def optimize_by_station(req: StationOptimizeRequest):
+async def optimize_by_station(req: StationOptimizeRequest) -> dict:
     """Division/station-constrained patrol optimization.
 
     Unlike the global optimizer, this ensures officers are allocated

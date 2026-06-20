@@ -14,6 +14,10 @@ import time
 import traceback
 import uuid
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Callable
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -43,7 +47,7 @@ ALLOWED_ORIGINS = os.environ.get("DRISHTAM_ALLOWED_ORIGINS", _default_origins).s
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # pragma: no cover
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:  # pragma: no cover
     """Load all engines at startup."""
     engines.load_all()
     yield
@@ -68,12 +72,13 @@ MAX_BODY_SIZE = int(os.environ.get("DRISHTAM_MAX_BODY_SIZE", str(10 * 1024 * 102
 # ── Global Exception Handlers ────────────────────────────────
 # Prevent stack traces from leaking to clients in production.
 
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch unhandled exceptions -- log full trace, return safe message."""
     request_id = request.headers.get("X-Request-ID", "unknown")  # pragma: no cover
     logger.error(  # pragma: no cover
-        f"Unhandled exception [request_id={request_id}]: {exc}"
+        "Unhandled exception [request_id=%s]: %s", request_id, exc
     )
     if not IS_PROD:  # pragma: no cover
         # In development, include traceback for debugging
@@ -91,9 +96,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
-) -> JSONResponse:
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Return clean validation errors without internal details."""
     return JSONResponse(
         status_code=422,
@@ -136,7 +139,10 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # 3. Security headers middleware
 @app.middleware("http")
-async def security_headers(request: Request, call_next) -> Response:
+async def security_headers(
+    request: Request,
+    call_next: Callable,
+) -> Response:
     """Add security headers to every response."""
     # Generate request ID for tracing
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
@@ -155,20 +161,16 @@ async def security_headers(request: Request, call_next) -> Response:
     # Referrer policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     # Permissions policy — disable unnecessary browser features
-    response.headers["Permissions-Policy"] = (
-        "camera=(), microphone=(), geolocation=(), payment=()"
-    )
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
     # Content Security Policy for API responses
     response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
     # HSTS (only in production behind TLS)
     if IS_PROD:
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains; preload"
-        )
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
     # Request tracing
     response.headers["X-Request-ID"] = request_id
     # Server timing (non-sensitive)
-    response.headers["Server-Timing"] = f"total;dur={elapsed*1000:.1f}"
+    response.headers["Server-Timing"] = f"total;dur={elapsed * 1000:.1f}"
     # Remove server identity header
     if "server" in response.headers:
         del response.headers["server"]
@@ -197,7 +199,10 @@ RATE_STORE_MAX_IPS = 10_000  # Max tracked IPs to prevent memory exhaustion
 
 
 @app.middleware("http")
-async def rate_limiter(request: Request, call_next) -> Response:
+async def rate_limiter(
+    request: Request,
+    call_next: Callable,
+) -> Response:
     """Sliding-window rate limiter per client IP with memory bounds."""
     # Skip rate limiting for health checks
     if request.url.path == "/health":
@@ -227,7 +232,7 @@ async def rate_limiter(request: Request, call_next) -> Response:
         # Hard cap: if still too many IPs, drop oldest half
         if len(_rate_store) > RATE_STORE_MAX_IPS:  # pragma: no cover
             sorted_ips = sorted(_rate_store.keys(), key=lambda ip: _rate_store[ip][-1] if _rate_store[ip] else 0)
-            for ip in sorted_ips[:len(sorted_ips) // 2]:
+            for ip in sorted_ips[: len(sorted_ips) // 2]:
                 del _rate_store[ip]
 
     # Clean old entries for this IP and check count
@@ -260,5 +265,6 @@ app.include_router(stations.router)
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict:
+    """Health check endpoint."""
     return {"status": "ok", "engines_loaded": engines.ready}

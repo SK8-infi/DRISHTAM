@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["whatif"])
 
 
 @router.post("/whatif", response_model=WhatIfResponse)
-async def run_whatif(req: WhatIfRequest):
+async def run_whatif(req: WhatIfRequest) -> WhatIfResponse:
     """Run live what-if scenario.
 
     Loads GBM → zeros violation features on target roads → re-predicts → returns delta.
@@ -19,13 +19,13 @@ async def run_whatif(req: WhatIfRequest):
 
 
 @router.get("/whatif/scenarios")
-async def get_predefined_scenarios():
+async def get_predefined_scenarios() -> dict:
     """Return the 12 predefined scenario results."""
     return engines.scenarios
 
 
 @router.get("/whatif/roads")
-async def get_available_roads(q: str = "", limit: int = 20):
+async def get_available_roads(q: str = "", limit: int = 20) -> dict:
     """Search available road names for the road selector."""
     roads = engines.segments["road_name"].unique()
     if q:
@@ -33,9 +33,7 @@ async def get_available_roads(q: str = "", limit: int = 20):
     else:
         # Return top roads by violation count
         top = (
-            engines.violations[engines.violations["road_name"] != "Unnamed"]
-            .groupby("road_name").size()
-            .nlargest(limit)
+            engines.violations[engines.violations["road_name"] != "Unnamed"].groupby("road_name").size().nlargest(limit)
         )
         roads = top.index.tolist()
     return {"roads": list(roads[:limit])}

@@ -4,7 +4,6 @@ Covers: security headers, CORS, rate limiting, exception handlers,
 body size limits, docs availability, health endpoint.
 """
 
-from unittest.mock import patch
 
 
 def test_health_returns_ok(client):

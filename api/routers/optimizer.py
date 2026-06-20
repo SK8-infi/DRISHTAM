@@ -9,7 +9,6 @@ router = APIRouter(prefix="/api", tags=["optimizer"])
 
 
 @router.post("/optimize")
-async def run_optimize(req: OptimizeRequest):
+async def run_optimize(req: OptimizeRequest) -> dict:
     """Run patrol optimization for a custom fleet configuration."""
-    result = engines.run_optimize(req.n_officers, req.shifts, req.hours_per_shift)
-    return result
+    return engines.run_optimize(req.n_officers, req.shifts, req.hours_per_shift)

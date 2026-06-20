@@ -5,13 +5,12 @@ and field constraints.
 """
 
 import pytest
-from pydantic import ValidationError
-
 from api.models import (
     OptimizeRequest,
     StationOptimizeRequest,
     WhatIfRequest,
 )
+from pydantic import ValidationError
 
 
 class TestWhatIfRequest:
@@ -107,9 +106,7 @@ class TestStationOptimizeRequest:
             StationOptimizeRequest(station="A" * 200)
 
     def test_custom_allocation_valid(self):
-        req = StationOptimizeRequest(
-            custom_allocation={"Station A": 5, "Station B": 10}
-        )
+        req = StationOptimizeRequest(custom_allocation={"Station A": 5, "Station B": 10})
         assert len(req.custom_allocation) == 2
 
     def test_custom_allocation_too_many(self):
@@ -118,9 +115,7 @@ class TestStationOptimizeRequest:
             StationOptimizeRequest(custom_allocation=alloc)
 
     def test_custom_allocation_values_capped(self):
-        req = StationOptimizeRequest(
-            custom_allocation={"Station A": 999}
-        )
+        req = StationOptimizeRequest(custom_allocation={"Station A": 999})
         assert req.custom_allocation["Station A"] <= 500
 
     def test_all_valid_divisions(self):

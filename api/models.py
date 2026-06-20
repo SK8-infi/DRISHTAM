@@ -1,27 +1,42 @@
-from pydantic import BaseModel, Field, field_validator
+"""DRISHTAM — Pydantic models for API request/response validation.
 
+All API endpoints use these models for input validation, serialization,
+and automatic OpenAPI documentation generation.
+"""
+
+from pydantic import BaseModel, Field, field_validator
 
 # ── Shared ────────────────────────────────────────────────────
 
+
 class Coords(BaseModel):
+    """Geographic coordinate pair."""
+
     lat: float
     lon: float
 
 
 # ── Overview ──────────────────────────────────────────────────
 
+
 class TopRoad(BaseModel):
+    """Road with its total Parking Impact Score."""
+
     name: str
     total_pis: float
 
 
 class EnforcementGap(BaseModel):
+    """Evening enforcement gap statistics."""
+
     hours: list[int]
     violations_in_gap: int
     pct_of_total: float
 
 
 class OverviewResponse(BaseModel):
+    """Dashboard-level KPIs and summary statistics."""
+
     total_violations: int
     total_segments: int
     affected_segments: int
@@ -37,8 +52,10 @@ class OverviewResponse(BaseModel):
 
 # ── Segments ──────────────────────────────────────────────────
 
+
 class SegmentLight(BaseModel):
     """Lightweight segment for map rendering (includes line geometry)."""
+
     seg_idx: int
     lat: float
     lon: float
@@ -55,6 +72,8 @@ class SegmentLight(BaseModel):
 
 
 class PISBreakdown(BaseModel):
+    """Decomposition of a road's Parking Impact Score into sub-components."""
+
     capacity: float
     importance: float
     junction: float
@@ -65,6 +84,8 @@ class PISBreakdown(BaseModel):
 
 
 class NeighborSegment(BaseModel):
+    """Lightweight neighbor segment reference for drill-down panels."""
+
     seg_idx: int
     lat: float
     lon: float
@@ -74,6 +95,7 @@ class NeighborSegment(BaseModel):
 
 class SegmentDetail(BaseModel):
     """Full segment detail for microscopic inspection."""
+
     seg_idx: int
     osm_u: str = ""
     osm_v: str = ""
@@ -100,6 +122,8 @@ class SegmentDetail(BaseModel):
 
 
 class SegmentsResponse(BaseModel):
+    """Paginated response of lightweight segments within a bounding box."""
+
     count: int
     bbox: dict[str, float]
     segments: list[SegmentLight]
@@ -107,7 +131,10 @@ class SegmentsResponse(BaseModel):
 
 # ── What-If ───────────────────────────────────────────────────
 
+
 class WhatIfRequest(BaseModel):
+    """Request body for counterfactual What-If enforcement simulation."""
+
     road_names: list[str] = Field(default=[], max_length=50)
     seg_indices: list[int] = Field(default=[], max_length=5000)
     action: str = Field(default="enforce", pattern=r"^(enforce|remove)$")
@@ -119,8 +146,9 @@ class WhatIfRequest(BaseModel):
         return [name.strip()[:200] for name in v if name.strip()]
 
 
-
 class ImprovedSegment(BaseModel):
+    """Segment showing baseline vs. counterfactual impact improvement."""
+
     seg_idx: int
     road_name: str
     lat: float
@@ -136,6 +164,7 @@ class ImprovedSegment(BaseModel):
 
 class PropagationRing(BaseModel):
     """Segments affected at a given hop distance from enforced roads."""
+
     hop: int = Field(description="0 = directly enforced, 1 = 1-hop neighbor, etc.")
     segments: int
     total_improvement: float
@@ -143,6 +172,8 @@ class PropagationRing(BaseModel):
 
 
 class CostBenefit(BaseModel):
+    """Cost-benefit analysis of a proposed enforcement action."""
+
     officers_needed: int
     cost_per_day_lakhs: float
     congestion_saved_crore: float
@@ -150,6 +181,8 @@ class CostBenefit(BaseModel):
 
 
 class WhatIfResponse(BaseModel):
+    """Full result of a What-If simulation including propagation rings."""
+
     road_names: list[str]
     segments_affected: int
     violations_removed: int
@@ -165,7 +198,10 @@ class WhatIfResponse(BaseModel):
 
 # ── Risk ──────────────────────────────────────────────────────
 
+
 class RiskSegment(BaseModel):
+    """A road segment with its predicted hourly violation risk score."""
+
     seg_idx: int
     road_name: str
     lat: float
@@ -176,6 +212,8 @@ class RiskSegment(BaseModel):
 
 
 class RiskResponse(BaseModel):
+    """Risk forecast response for a given hour."""
+
     hour: int
     count: int
     segments: list[RiskSegment]
@@ -183,7 +221,10 @@ class RiskResponse(BaseModel):
 
 # ── Optimizer ─────────────────────────────────────────────────
 
+
 class OptimizeRequest(BaseModel):
+    """Request parameters for patrol fleet optimization."""
+
     n_officers: int = Field(default=50, ge=1, le=500)
     shifts: int = Field(default=3, ge=1, le=6)
     hours_per_shift: int = Field(default=2, ge=1, le=8)
@@ -191,20 +232,25 @@ class OptimizeRequest(BaseModel):
 
 # ── Stations & Divisions ─────────────────────────────────────
 
+
 class StationSummary(BaseModel):
+    """Summary statistics for a single traffic police station."""
+
     station_name: str
-    division: str          # "East", "West", "North", "South"
+    division: str  # "East", "West", "North", "South"
     violations: int
     total_pis: float
     mean_pis: float
     roads: int
     devices: int
-    lat: float             # centroid
+    lat: float  # centroid
     lon: float
     bbox: list[float] = []  # [min_lat, min_lon, max_lat, max_lon]
 
 
 class StationDetail(BaseModel):
+    """Full drill-down data for a single police station."""
+
     station_name: str
     division: str
     violations: int
@@ -214,12 +260,14 @@ class StationDetail(BaseModel):
     devices: int
     lat: float
     lon: float
-    top_roads: list[dict] = []          # [{road_name, violations, mean_pis}]
+    top_roads: list[dict] = []  # [{road_name, violations, mean_pis}]
     hourly_profile: dict[str, int] = {}
     vehicle_types: dict[str, int] = {}
 
 
 class StationOptimizeRequest(BaseModel):
+    """Request body for station-constrained patrol optimization."""
+
     n_officers: int = Field(default=50, ge=1, le=500)
     shifts: int = Field(default=3, ge=1, le=6)
     hours_per_shift: int = Field(default=2, ge=1, le=8)
@@ -235,13 +283,17 @@ class StationOptimizeRequest(BaseModel):
         if v is None:
             return v
         if len(v) > 60:  # max 54 stations + margin
-            raise ValueError("custom_allocation cannot have more than 60 entries")
+            msg = "custom_allocation cannot have more than 60 entries"
+            raise ValueError(msg)
         return {k[:100]: max(0, min(v_val, 500)) for k, v_val in v.items()}
 
 
 # ── Clusters ──────────────────────────────────────────────────
 
+
 class ClusterSummary(BaseModel):
+    """Summary statistics for a spatial violation cluster."""
+
     cluster_id: int
     n_violations: int
     mean_pis: float
@@ -257,6 +309,8 @@ class ClusterSummary(BaseModel):
 
 
 class ClusterRoadBreakdown(BaseModel):
+    """Per-road violation breakdown within a cluster."""
+
     road_name: str
     violations: int
     mean_pis: float
@@ -265,6 +319,7 @@ class ClusterRoadBreakdown(BaseModel):
 
 class ClusterDetail(BaseModel):
     """Full cluster detail for drill-down panel."""
+
     cluster_id: int
     n_violations: int
     mean_pis: float
@@ -287,7 +342,10 @@ class ClusterDetail(BaseModel):
 
 # ── Violations ────────────────────────────────────────────────
 
+
 class ViolationRecord(BaseModel):
+    """Individual parking violation record."""
+
     id: int | str
     latitude: float
     longitude: float
@@ -302,8 +360,10 @@ class ViolationRecord(BaseModel):
 
 # ── Insights ──────────────────────────────────────────────────
 
+
 class Insight(BaseModel):
     """A single data-driven insight computed from live engines."""
+
     id: str
     category: str  # "impact", "enforcement", "risk", "optimizer", "bias"
     title: str
@@ -316,6 +376,8 @@ class Insight(BaseModel):
 
 
 class DataQuality(BaseModel):
+    """Data quality scorecard for the violations dataset."""
+
     total_records: int
     date_range: str
     road_coverage_pct: float
@@ -328,6 +390,8 @@ class DataQuality(BaseModel):
 
 
 class Experiment(BaseModel):
+    """Machine learning experiment result for the experiment log."""
+
     name: str
     model_type: str
     features: int
@@ -337,8 +401,9 @@ class Experiment(BaseModel):
 
 
 class InsightsResponse(BaseModel):
+    """Full insights response including findings, quality, and experiments."""
+
     findings: list[Insight]
     data_quality: DataQuality
     experiments: list[Experiment]
     methodology: dict[str, str]
-

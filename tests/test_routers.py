@@ -4,10 +4,10 @@ Covers: overview, segments, whatif, risk, optimizer, clusters,
 violations, insights, stations.
 """
 
-import json
 
 
 # ── Overview ──────────────────────────────────────────────────
+
 
 class TestOverview:
     def test_get_overview(self, client):
@@ -32,6 +32,7 @@ class TestOverview:
 
 
 # ── Segments ──────────────────────────────────────────────────
+
 
 class TestSegments:
     def test_get_segments_default_bbox(self, client):
@@ -86,6 +87,7 @@ class TestSegments:
 
 # ── What-If ───────────────────────────────────────────────────
 
+
 class TestWhatIf:
     def test_whatif_by_road_name(self, client):
         r = client.post("/api/whatif", json={"road_names": ["Road_0"], "action": "enforce"})
@@ -135,6 +137,7 @@ class TestWhatIf:
 
 # ── Risk ──────────────────────────────────────────────────────
 
+
 class TestRisk:
     def test_get_risk_default(self, client):
         r = client.get("/api/risk?hour=9")
@@ -172,6 +175,7 @@ class TestRisk:
 
 # ── Optimizer ─────────────────────────────────────────────────
 
+
 class TestOptimizer:
     def test_optimize_default(self, client):
         r = client.post("/api/optimize", json={})
@@ -193,6 +197,7 @@ class TestOptimizer:
 
 
 # ── Clusters ──────────────────────────────────────────────────
+
 
 class TestClusters:
     def test_get_clusters(self, client):
@@ -232,6 +237,7 @@ class TestClusters:
 
 
 # ── Violations ────────────────────────────────────────────────
+
 
 class TestViolations:
     def test_search_violations_default(self, client):
@@ -273,21 +279,36 @@ class TestViolations:
 
 # ── Insights ──────────────────────────────────────────────────
 
+
 class TestInsights:
     def test_get_insights(self, client, mock_engines):
         # compute_insights is a complex method — patch it to return a valid structure
         from unittest.mock import patch
+
         mock_response = {
             "findings": [
-                {"id": "test", "category": "impact", "title": "Test", "value": "1",
-                 "detail": "detail", "source": "test", "severity": "info",
-                 "link_page": "", "link_params": ""}
+                {
+                    "id": "test",
+                    "category": "impact",
+                    "title": "Test",
+                    "value": "1",
+                    "detail": "detail",
+                    "source": "test",
+                    "severity": "info",
+                    "link_page": "",
+                    "link_params": "",
+                }
             ],
             "data_quality": {
-                "total_records": 200, "date_range": "Jan-May 2025",
-                "road_coverage_pct": 50.0, "segments_total": 100,
-                "segments_with_violations": 50, "features_count": 36,
-                "missing_road_names_pct": 0.0, "vehicle_types": 4, "hours_covered": 24,
+                "total_records": 200,
+                "date_range": "Jan-May 2025",
+                "road_coverage_pct": 50.0,
+                "segments_total": 100,
+                "segments_with_violations": 50,
+                "features_count": 36,
+                "missing_road_names_pct": 0.0,
+                "vehicle_types": 4,
+                "hours_covered": 24,
             },
             "experiments": [],
             "methodology": {"data": "test"},
@@ -303,6 +324,7 @@ class TestInsights:
 
 
 # ── Stations ──────────────────────────────────────────────────
+
 
 class TestStations:
     def test_list_stations(self, client):
@@ -344,8 +366,11 @@ class TestStations:
         assert r.status_code == 422
 
     def test_station_optimize_custom_allocation(self, client):
-        r = client.post("/api/optimize/station", json={
-            "custom_allocation": {"Cubbon Park": 5, "Halasuru Gate": 3},
-            "n_officers": 8,
-        })
+        r = client.post(
+            "/api/optimize/station",
+            json={
+                "custom_allocation": {"Cubbon Park": 5, "Halasuru Gate": 3},
+                "n_officers": 8,
+            },
+        )
         assert r.status_code == 200

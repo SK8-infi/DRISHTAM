@@ -9,6 +9,6 @@ router = APIRouter(prefix="/api", tags=["overview"])
 
 
 @router.get("/overview", response_model=OverviewResponse)
-async def get_overview():
+async def get_overview() -> OverviewResponse:
     """Return top-level dashboard KPIs."""
     return engines.overview

@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["insights"])
 
 
 @router.get("/insights", response_model=InsightsResponse)
-async def get_insights():
+async def get_insights() -> InsightsResponse:
     """Return dynamically computed insights from live engine data.
 
     Includes:

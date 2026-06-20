@@ -118,7 +118,7 @@ ignore = [
 # Scripts are allowed more relaxed rules
 "scripts/*.py" = ["D103", "ANN", "T201", "E402", "TC"]  # Allow print(), no function docstrings, import order
 "eda_*.py" = ["D", "ANN", "S", "T201", "E402", "TC"]    # EDA scripts are exploratory
-"tests/*.py" = ["D103", "ANN", "S101", "S106"]             # Tests use assert
+"tests/*.py" = ["D101", "D102", "D103", "D107", "ANN", "S101", "S106", "S108", "SIM117", "E402", "PERF401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

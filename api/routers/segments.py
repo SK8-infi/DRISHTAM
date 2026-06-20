@@ -1,4 +1,5 @@
 """GET /api/segments — Bbox-filtered segment data.
+
 GET /api/segment/{seg_idx} — Deep segment inspection.
 """
 
@@ -20,14 +21,25 @@ async def get_segments(
     max_impact: float = Query(1.0, le=1.0, description="Maximum impact threshold"),
     tier: int | None = Query(None, ge=0, le=8, description="Road tier filter"),
     limit: int = Query(5000, ge=1, le=20000, description="Max segments returned"),
-):
+) -> SegmentsResponse:
     """Return lightweight segment data within bounding box."""
     df = engines.query_bbox(lat_min, lat_max, lon_min, lon_max, min_impact, max_impact, tier, limit)
 
     # Vectorized serialization — 10-50× faster than df.iterrows()
     cols = [
-        "seg_idx", "lat", "lon", "lat_u", "lon_u", "lat_v", "lon_v",
-        "road_name", "highway", "tier", "lanes", "impact_gbm", "violation_count",
+        "seg_idx",
+        "lat",
+        "lon",
+        "lat_u",
+        "lon_u",
+        "lat_v",
+        "lon_v",
+        "road_name",
+        "highway",
+        "tier",
+        "lanes",
+        "impact_gbm",
+        "violation_count",
     ]
     # Fill missing geometry columns with centroid
     for col in ("lat_u", "lon_u", "lat_v", "lon_v"):
@@ -46,7 +58,7 @@ async def get_segments(
 
 
 @router.get("/segment/{seg_idx}", response_model=SegmentDetail)
-async def get_segment_detail(seg_idx: int):
+async def get_segment_detail(seg_idx: int) -> SegmentDetail:
     """Deep inspection of a single segment — the microscopic view."""
     data = engines.get_segment(seg_idx)
     if data is None:

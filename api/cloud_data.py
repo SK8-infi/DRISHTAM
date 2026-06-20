@@ -57,9 +57,7 @@ REQUIRED_FILES: list[tuple[str, int]] = [
 
 def _default_cache_dir() -> Path:
     """Return the default cache directory."""
-    return Path(
-        os.environ.get("DRISHTAM_CACHE_DIR", Path.home() / ".cache" / "drishtam")
-    )
+    return Path(os.environ.get("DRISHTAM_CACHE_DIR", Path.home() / ".cache" / "drishtam"))
 
 
 def _download_file(url: str, dest: Path, expected_size: int) -> None:
@@ -67,29 +65,30 @@ def _download_file(url: str, dest: Path, expected_size: int) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
 
     # Download to a temp file first, then atomic rename
-    tmp_fd, tmp_path = tempfile.mkstemp(
-        dir=dest.parent, suffix=".download"
-    )
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dest.parent, suffix=".download")
     os.close(tmp_fd)
 
     try:
-        logger.info(f"  ↓ {dest.name} ({expected_size / 1_000_000:.1f} MB)")
-        urllib.request.urlretrieve(url, tmp_path)
+        logger.info("  \u2193 %s (%.1f MB)", dest.name, expected_size / 1_000_000)
+        urllib.request.urlretrieve(url, tmp_path)  # noqa: S310
 
         # Verify size
-        actual_size = os.path.getsize(tmp_path)
+        actual_size = Path(tmp_path).stat().st_size
         if actual_size != expected_size:
             logger.warning(
-                f"  ⚠ Size mismatch for {dest.name}: "
-                f"expected {expected_size}, got {actual_size}"
+                "  \u26a0 Size mismatch for %s: expected %d, got %d",
+                dest.name,
+                expected_size,
+                actual_size,
             )
 
         # Atomic move
         shutil.move(tmp_path, dest)
     except Exception:
         # Clean up temp file on failure
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+        tmp = Path(tmp_path)
+        if tmp.exists():
+            tmp.unlink()
         raise
 
 
@@ -111,12 +110,12 @@ def ensure_data_downloaded() -> tuple[Path, Path]:
     local_override = os.environ.get("DRISHTAM_DATA_DIR")
     if local_override:
         root = Path(local_override)
-        logger.info(f"Using local data dir: {root}")
+        logger.info("Using local data dir: %s", root)
         return root / "data", root / "models"
 
     # ── Download from GCS ──
     cache_root = _default_cache_dir()
-    logger.info(f"Cache directory: {cache_root}")
+    logger.info("Cache directory: %s", cache_root)
 
     files_to_download: list[tuple[str, int]] = []
     for rel_path, expected_size in REQUIRED_FILES:
@@ -125,16 +124,18 @@ def ensure_data_downloaded() -> tuple[Path, Path]:
             files_to_download.append((rel_path, expected_size))
 
     if not files_to_download:
-        logger.info(f"All {len(REQUIRED_FILES)} files cached ✅")
+        logger.info("All %d files cached \u2705", len(REQUIRED_FILES))
     else:
         logger.info(
-            f"Downloading {len(files_to_download)}/{len(REQUIRED_FILES)} "
-            f"files from gs://{GCS_BUCKET}..."
+            "Downloading %d/%d files from gs://%s...",
+            len(files_to_download),
+            len(REQUIRED_FILES),
+            GCS_BUCKET,
         )
         for rel_path, expected_size in files_to_download:
             url = f"{GCS_BASE_URL}/{rel_path}"
             dest = cache_root / rel_path
             _download_file(url, dest, expected_size)
-        logger.info("Download complete ✅")
+        logger.info("Download complete \u2705")
 
     return cache_root / "data", cache_root / "models"

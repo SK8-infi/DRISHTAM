@@ -6,7 +6,6 @@ Every API endpoint computes fresh from these loaded engines.
 
 from __future__ import annotations
 
-import functools
 import logging
 import time
 from pathlib import Path
@@ -31,30 +30,65 @@ DATA_DIR, MODELS_DIR = ensure_data_downloaded()
 
 DIVISION_MAP: dict[str, list[str]] = {
     "East": [
-        "Cubbon Park", "Halasuru Gate", "High ground", "Halasur",
-        "Jeevanbheemanagar", "K.R. Pura", "Shivajinagar",
-        "Pulikeshinagar(F.Town)", "Banaswadi", "Adugodi",
-        "HAL Old Airport", "Madiwala", "Mico Layout",
-        "Electronic City", "Whitefield", "Hulimavu",
-        "HSR Layout", "Bellandur", "Mahadevapura",
-        "Ashok Nagar", "Wilson Garden",
+        "Cubbon Park",
+        "Halasuru Gate",
+        "High ground",
+        "Halasur",
+        "Jeevanbheemanagar",
+        "K.R. Pura",
+        "Shivajinagar",
+        "Pulikeshinagar(F.Town)",
+        "Banaswadi",
+        "Adugodi",
+        "HAL Old Airport",
+        "Madiwala",
+        "Mico Layout",
+        "Electronic City",
+        "Whitefield",
+        "Hulimavu",
+        "HSR Layout",
+        "Bellandur",
+        "Mahadevapura",
+        "Ashok Nagar",
+        "Wilson Garden",
     ],
     "West": [
-        "Upparpet", "City Market", "Magadi Road", "Vijayanagara",
-        "Byatarayanapura", "Kamakshipalya", "Kengeri",
-        "Malleshwaram", "Rajajinagar", "Yeshwanthpura",
-        "Peenya", "Jalahalli", "V.V.Puram (C.Pet)",
-        "Jayanagara", "Basavanagudi", "Banashankari",
-        "Chamarajpet", "K.S. Layout", "Jnanabharathi",
-        "Chikkabanavara", "Sheshadripuram",
+        "Upparpet",
+        "City Market",
+        "Magadi Road",
+        "Vijayanagara",
+        "Byatarayanapura",
+        "Kamakshipalya",
+        "Kengeri",
+        "Malleshwaram",
+        "Rajajinagar",
+        "Yeshwanthpura",
+        "Peenya",
+        "Jalahalli",
+        "V.V.Puram (C.Pet)",
+        "Jayanagara",
+        "Basavanagudi",
+        "Banashankari",
+        "Chamarajpet",
+        "K.S. Layout",
+        "Jnanabharathi",
+        "Chikkabanavara",
+        "Sheshadripuram",
     ],
     "North": [
-        "Kodigehalli", "Hebbala", "R.T. Nagar",
-        "Sadashivanagar", "Yelahanka", "Chikkajala",
-        "Devanahalli Airport", "Hennuru", "K.G. Halli",
+        "Kodigehalli",
+        "Hebbala",
+        "R.T. Nagar",
+        "Sadashivanagar",
+        "Yelahanka",
+        "Chikkajala",
+        "Devanahalli Airport",
+        "Hennuru",
+        "K.G. Halli",
     ],
     "South": [
-        "J.P. Nagar", "Thalagattapura",
+        "J.P. Nagar",
+        "Thalagattapura",
     ],
 }
 
@@ -69,6 +103,7 @@ class EngineStore:
     """Singleton holding all loaded engines and data."""
 
     def __init__(self) -> None:
+        """Initialize engine store in unloaded state."""
         self.ready = False
 
     def load_all(self) -> None:
@@ -89,10 +124,10 @@ class EngineStore:
 
         self.ready = True
         self._insights_cache: dict | None = None
-        self._risk_cache: dict[int, list[dict]] = {}
+        self._risk_cache: dict[tuple[int, int], list[dict]] = {}
         self._clusters_cache: list[dict] | None = None
         self._stations_cache: dict[str | None, list[dict]] = {}
-        logger.info(f"All engines loaded in {time.time()-t0:.1f}s ✅")
+        logger.info("All engines loaded in %.1fs \u2705", time.time() - t0)
 
     # ── Segments ──────────────────────────────────────────────
 
@@ -102,15 +137,25 @@ class EngineStore:
         self.seg_lat = self.segments["lat"].values
         self.seg_lon = self.segments["lon"].values
         self.seg_impact = self.segments["impact_gbm"].values
-        logger.info(f"  Segments: {len(self.segments)}")
+        logger.info("  Segments: %d", len(self.segments))
 
     def query_bbox(
-        self, lat_min: float, lat_max: float, lon_min: float, lon_max: float,
-        min_impact: float = 0.0, max_impact: float = 1.0, tier: int | None = None, limit: int = 5000,
+        self,
+        lat_min: float,
+        lat_max: float,
+        lon_min: float,
+        lon_max: float,
+        min_impact: float = 0.0,
+        max_impact: float = 1.0,
+        tier: int | None = None,
+        limit: int = 5000,
     ) -> pd.DataFrame:
+        """Return segments within a geographic bounding box, filtered by impact."""
         mask = (
-            (self.seg_lat >= lat_min) & (self.seg_lat <= lat_max) &
-            (self.seg_lon >= lon_min) & (self.seg_lon <= lon_max)
+            (self.seg_lat >= lat_min)
+            & (self.seg_lat <= lat_max)
+            & (self.seg_lon >= lon_min)
+            & (self.seg_lon <= lon_max)
         )
         if min_impact > 0:
             mask &= self.seg_impact >= min_impact
@@ -124,6 +169,7 @@ class EngineStore:
         return result
 
     def get_segment(self, seg_idx: int) -> dict | None:
+        """Return full detail dict for a single segment, or None."""
         row = self.segments[self.segments["seg_idx"] == seg_idx]
         if len(row) == 0:
             return None
@@ -134,17 +180,14 @@ class EngineStore:
         if road_name in self.hourly_counts.index:
             profile = self.hourly_counts.loc[road_name].to_dict()
         else:
-            profile = {h: 0 for h in range(24)}
+            profile = dict.fromkeys(range(24), 0)
         seg["hourly_profile"] = profile
 
         # Add neighbor segments
         neighbors = self.segments[
-            (self.segments["road_name"] == road_name) &
-            (self.segments["seg_idx"] != seg_idx)
+            (self.segments["road_name"] == road_name) & (self.segments["seg_idx"] != seg_idx)
         ].head(10)
-        seg["neighbors"] = neighbors[
-            ["seg_idx", "lat", "lon", "impact_gbm", "highway"]
-        ].to_dict("records")
+        seg["neighbors"] = neighbors[["seg_idx", "lat", "lon", "impact_gbm", "highway"]].to_dict("records")
 
         # PIS breakdown (from violations)
         road_viols = self.violations[self.violations["road_name"] == road_name]
@@ -167,31 +210,32 @@ class EngineStore:
 
     def _load_violations(self) -> None:  # pragma: no cover
         self.violations = pd.read_parquet(DATA_DIR / "violations_enriched.parquet")
-        self.hourly_counts = (
-            self.violations.groupby(["road_name", "hour_ist"])
-            .size().unstack(fill_value=0)
-        )
+        self.hourly_counts = self.violations.groupby(["road_name", "hour_ist"]).size().unstack(fill_value=0)
         self.total_violations = len(self.violations)
-        logger.info(f"  Violations: {self.total_violations}")
+        logger.info("  Violations: %d", self.total_violations)
 
         # Build road → station mapping (most common station per road)
         if "police_station" in self.violations.columns and "road_name" in self.violations.columns:
             road_station = (
                 self.violations.groupby(["road_name", "police_station"])
-                .size().reset_index(name="count")
+                .size()
+                .reset_index(name="count")
                 .sort_values("count", ascending=False)
                 .drop_duplicates(subset="road_name", keep="first")
             )
             self.road_to_station: dict[str, str] = dict(
-                zip(road_station["road_name"], road_station["police_station"])
+                zip(road_station["road_name"], road_station["police_station"], strict=False)
             )
         else:
             self.road_to_station = {}
 
     def search_violations(
-        self, road_name: str | None = None, hour: int | None = None,
+        self,
+        road_name: str | None = None,
+        hour: int | None = None,
         limit: int = 50,
     ) -> pd.DataFrame:
+        """Search violations with optional road name and hour filters."""
         df = self.violations
         if road_name:
             df = df[df["road_name"].str.contains(road_name, case=False, na=False)]
@@ -205,22 +249,42 @@ class EngineStore:
         self.gbm = joblib.load(MODELS_DIR / "gbm_36d_best.pkl")
         self.scaler = joblib.load(MODELS_DIR / "feature_scaler.pkl")
         self.features = np.load(MODELS_DIR / "features_36d.npy")
-        logger.info(f"  Engine 1: GBM loaded, features={self.features.shape}")
+        logger.info("  Engine 1: GBM loaded, features=%s", self.features.shape)
 
     # ── Engine 2: What-If ─────────────────────────────────────
 
     VIOL_INDICES = [
-        9, 10, 11, 12, 13, 14, 15,   # direct violation features
-        16, 17, 18, 19,               # 1-hop neighbor
-        21, 22,                        # 2-hop neighbor
-        24, 25, 26, 27, 28, 30, 31, 32, 34, 35,  # interactions
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,  # direct violation features
+        16,
+        17,
+        18,
+        19,  # 1-hop neighbor
+        21,
+        22,  # 2-hop neighbor
+        24,
+        25,
+        26,
+        27,
+        28,
+        30,
+        31,
+        32,
+        34,
+        35,  # interactions
     ]
 
     def _load_engine2_data(self) -> None:  # pragma: no cover
         import json
+
         scenarios_path = DATA_DIR / "counterfactual_scenarios.json"
         if scenarios_path.exists():
-            with open(scenarios_path) as f:
+            with scenarios_path.open() as f:
                 self.scenarios = json.load(f)
         else:
             self.scenarios = {"scenarios": [], "metadata": {}}
@@ -229,11 +293,11 @@ class EngineStore:
         features_scaled = self.scaler.transform(self.features)
         self.baseline_preds = self.gbm.predict(features_scaled)
         self.baseline_impact = float(self.baseline_preds.sum())
-        logger.info(f"  Engine 2: baseline_impact={self.baseline_impact:.1f}")
+        logger.info("  Engine 2: baseline_impact=%.1f", self.baseline_impact)
 
     def run_whatif(self, road_names: list[str], seg_indices_input: list[int] | None = None) -> dict:
         """Live what-if computation with propagation and cost-benefit.
-        
+
         If seg_indices_input is provided, enforce only those specific segments.
         Otherwise, enforce all segments matching road_names.
         """
@@ -302,19 +366,21 @@ class EngineStore:
         all_improved = set(np.where(improved_mask)[0])
 
         # Build propagation by hop distance
-        enforced_roads = set(road_names)
+        set(road_names)
         rings = []
 
         # Hop 0: segments on the enforced roads themselves
         hop0_indices = [i for i in all_improved if i in enforced_set]
         if hop0_indices:
             hop0_items = sorted(hop0_indices, key=lambda i: delta[i], reverse=True)[:15]
-            rings.append({
-                "hop": 0,
-                "segments": len(hop0_indices),
-                "total_improvement": float(sum(delta[i] for i in hop0_indices)),
-                "items": [_make_improved(i) for i in hop0_items],
-            })
+            rings.append(
+                {
+                    "hop": 0,
+                    "segments": len(hop0_indices),
+                    "total_improvement": float(sum(delta[i] for i in hop0_indices)),
+                    "items": [_make_improved(i) for i in hop0_items],
+                }
+            )
 
         # Hop 1: segments NOT on enforced roads but sharing a road_name with
         # a segment that is on an enforced road's neighboring road
@@ -322,15 +388,17 @@ class EngineStore:
 
         # Classify hop1 vs hop2 by whether the road_name appears as a neighbor
         # of any enforced segment (using same-road heuristic)
-        enforced_road_names = set(self.segments.iloc[list(enforced_set)]["road_name"].unique())
+        set(self.segments.iloc[list(enforced_set)]["road_name"].unique())
         hop1_actual = []
         hop2_actual = []
 
         for i in hop1_indices:
-            road = str(self.segments.iloc[i]["road_name"])
+            str(self.segments.iloc[i]["road_name"])
             # Check if this segment's lat/lon is within ~500m of any enforced segment
-            dist = np.min(np.abs(self.seg_lat[enforced_set_list] - self.seg_lat[i]) +
-                          np.abs(self.seg_lon[enforced_set_list] - self.seg_lon[i]))
+            dist = np.min(
+                np.abs(self.seg_lat[enforced_set_list] - self.seg_lat[i])
+                + np.abs(self.seg_lon[enforced_set_list] - self.seg_lon[i])
+            )
             if dist < 0.005:  # ~500m
                 hop1_actual.append(i)
             else:
@@ -338,21 +406,25 @@ class EngineStore:
 
         if hop1_actual:
             hop1_sorted = sorted(hop1_actual, key=lambda i: delta[i], reverse=True)[:15]
-            rings.append({
-                "hop": 1,
-                "segments": len(hop1_actual),
-                "total_improvement": float(sum(delta[i] for i in hop1_actual)),
-                "items": [_make_improved(i) for i in hop1_sorted],
-            })
+            rings.append(
+                {
+                    "hop": 1,
+                    "segments": len(hop1_actual),
+                    "total_improvement": float(sum(delta[i] for i in hop1_actual)),
+                    "items": [_make_improved(i) for i in hop1_sorted],
+                }
+            )
 
         if hop2_actual:
             hop2_sorted = sorted(hop2_actual, key=lambda i: delta[i], reverse=True)[:15]
-            rings.append({
-                "hop": 2,
-                "segments": len(hop2_actual),
-                "total_improvement": float(sum(delta[i] for i in hop2_actual)),
-                "items": [_make_improved(i) for i in hop2_sorted],
-            })
+            rings.append(
+                {
+                    "hop": 2,
+                    "segments": len(hop2_actual),
+                    "total_improvement": float(sum(delta[i] for i in hop2_actual)),
+                    "items": [_make_improved(i) for i in hop2_sorted],
+                }
+            )
 
         # ── Cost-Benefit ──
         # Rough estimate: 1 officer per 50 segments, ₹800/day per officer
@@ -369,9 +441,7 @@ class EngineStore:
         }
 
         # Count violations on those roads
-        v_count = int(self.violations[
-            self.violations["road_name"].isin(road_names)
-        ].shape[0])
+        v_count = int(self.violations[self.violations["road_name"].isin(road_names)].shape[0])
 
         return {
             "road_names": road_names,
@@ -403,9 +473,10 @@ class EngineStore:
                 total_violations=("id", "count"),
                 mean_pis=("pis", "mean"),
                 max_pis=("pis", "max"),
-            ).reset_index()
+            )
+            .reset_index()
         )
-        logger.info(f"  Engine 3: {len(self.risk_df)} risk predictions loaded")
+        logger.info("  Engine 3: %d risk predictions loaded", len(self.risk_df))
 
     def get_risk(self, hour: int, top_n: int = 50) -> list[dict]:
         """Get top risky segments for a given hour (cached after first call)."""
@@ -435,7 +506,10 @@ class EngineStore:
     # ── Optimizer ─────────────────────────────────────────────
 
     def run_optimize(
-        self, n_officers: int = 50, shifts: int = 3, hours_per_shift: int = 2,
+        self,
+        n_officers: int = 50,
+        shifts: int = 3,
+        hours_per_shift: int = 2,
     ) -> dict:
         """Run patrol optimization live."""
         import json as _json
@@ -448,10 +522,10 @@ class EngineStore:
         result = {"n_officers": n_officers, "shifts": shifts}
 
         if sched_path.exists():
-            with open(sched_path) as f:
+            with sched_path.open() as f:
                 result["schedule"] = _json.load(f)
         if fleet_path.exists():
-            with open(fleet_path) as f:
+            with fleet_path.open() as f:
                 result["fleet_comparison"] = _json.load(f)
 
         return result
@@ -465,8 +539,9 @@ class EngineStore:
             logger.info("  Stations: no police_station column")
             return
 
-        valid = self.violations[self.violations["police_station"].notna() &
-                                (self.violations["police_station"] != "No Police Station")]
+        valid = self.violations[
+            self.violations["police_station"].notna() & (self.violations["police_station"] != "No Police Station")
+        ]
 
         stations = (
             valid.groupby("police_station")
@@ -488,17 +563,17 @@ class EngineStore:
         )
 
         # Assign division
-        stations["division"] = stations["station_name"].map(
-            lambda s: STATION_TO_DIVISION.get(s, "Unassigned")
-        )
+        stations["division"] = stations["station_name"].map(lambda s: STATION_TO_DIVISION.get(s, "Unassigned"))
 
         # Build bbox list
-        stations["bbox"] = stations.apply(
-            lambda r: [r["min_lat"], r["min_lon"], r["max_lat"], r["max_lon"]], axis=1
-        )
+        stations["bbox"] = stations.apply(lambda r: [r["min_lat"], r["min_lon"], r["max_lat"], r["max_lon"]], axis=1)
 
         self.stations = stations.sort_values("violations", ascending=False)
-        logger.info(f"  Stations: {len(self.stations)} ({self.stations['division'].value_counts().to_dict()})")
+        logger.info(
+            "  Stations: %d (%s)",
+            len(self.stations),
+            self.stations["division"].value_counts().to_dict(),
+        )
 
     def get_stations(self, division: str | None = None) -> list[dict]:
         """Return station summaries, optionally filtered by division (cached)."""
@@ -509,8 +584,16 @@ class EngineStore:
         if division:
             df = df[df["division"].str.lower() == division.lower()]
         cols = [
-            "station_name", "division", "violations", "total_pis", "mean_pis",
-            "roads", "devices", "mean_lat", "mean_lon", "bbox",
+            "station_name",
+            "division",
+            "violations",
+            "total_pis",
+            "mean_pis",
+            "roads",
+            "devices",
+            "mean_lat",
+            "mean_lon",
+            "bbox",
         ]
         result_df = df[cols].rename(columns={"mean_lat": "lat", "mean_lon": "lon"})
         result = result_df.to_dict("records")
@@ -579,8 +662,6 @@ class EngineStore:
         Unlike the global optimizer, this ensures officers are allocated
         within their administrative boundaries.
         """
-        import json as _json
-
         # Determine which stations are in scope
         if station:
             target_stations = [station]
@@ -590,9 +671,7 @@ class EngineStore:
             target_stations = self.stations["station_name"].tolist()
 
         # Filter violations to target stations
-        viols = self.violations[
-            self.violations["police_station"].isin(target_stations)
-        ]
+        viols = self.violations[self.violations["police_station"].isin(target_stations)]
         if len(viols) == 0:
             return {"error": "No violations found for the specified station/division"}
 
@@ -613,7 +692,7 @@ class EngineStore:
         elif proportional and len(station_roads) > 1:
             # Proportional to total PIS
             stn_impact = {}
-            for stn, roads in station_roads.items():
+            for stn in station_roads.keys():  # noqa: SIM118
                 stn_viols = viols[viols["police_station"] == stn]
                 stn_impact[stn] = float(stn_viols["pis"].sum())
             total_impact = sum(stn_impact.values()) or 1.0
@@ -630,7 +709,7 @@ class EngineStore:
         else:
             # Equal distribution or single station
             per_station = max(1, n_officers // max(len(station_roads), 1))
-            station_officers = {stn: per_station for stn in station_roads}
+            station_officers = dict.fromkeys(station_roads, per_station)
 
         # Build ROI data per road from violations
         hourly_counts = viols.groupby(["road_name", "hour_ist"]).size().unstack(fill_value=0)
@@ -647,15 +726,15 @@ class EngineStore:
         # Road impact lookup from segments
         road_names = set(prob_matrix_dict.keys())
         valid_segs = self.segments[self.segments["road_name"].isin(road_names)]
-        
+
         if not valid_segs.empty:
             idx = valid_segs.groupby("road_name")["impact_gbm"].idxmax()
             max_impacts = valid_segs.loc[idx]
-            
-            road_impact = dict(zip(max_impacts["road_name"], max_impacts["impact_gbm"].astype(float)))
+
+            road_impact = dict(zip(max_impacts["road_name"], max_impacts["impact_gbm"].astype(float), strict=False))
             road_loc = {
                 rn: (float(lat), float(lon))
-                for rn, lat, lon in zip(max_impacts["road_name"], max_impacts["lat"], max_impacts["lon"])
+                for rn, lat, lon in zip(max_impacts["road_name"], max_impacts["lat"], max_impacts["lon"], strict=False)
             }
         else:
             road_impact = {}
@@ -684,17 +763,12 @@ class EngineStore:
                 for b in range(n_blocks):
                     h_start = b * hours_per_shift
                     h_end = h_start + hours_per_shift
-                    prob_sum = sum(
-                        prob_matrix_dict.get(road, {}).get(h, 0)
-                        for h in range(h_start, h_end)
-                    )
+                    prob_sum = sum(prob_matrix_dict.get(road, {}).get(h, 0) for h in range(h_start, h_end))
                     block_roi[i, b] = prob_sum * impact
 
             # Greedy assignment with diminishing returns
             assignment_count = np.zeros((n_roads, n_blocks), dtype=int)
-            officer_schedules: dict[int, list[int]] = {
-                (officer_id_counter + j): [] for j in range(stn_n_officers)
-            }
+            officer_schedules: dict[int, list[int]] = {(officer_id_counter + j): [] for j in range(stn_n_officers)}
             stn_assignments = []
 
             for shift_num in range(total_shifts):
@@ -742,14 +816,16 @@ class EngineStore:
             all_assignments.extend(stn_assignments)
 
             # Per-station summary
-            station_results.append({
-                "station": stn,
-                "division": STATION_TO_DIVISION.get(stn, "Unassigned"),
-                "officers_allocated": stn_n_officers,
-                "assignments": len(stn_assignments),
-                "roads_covered": len(set(a["road_name"] for a in stn_assignments)),
-                "total_roi": round(sum(a["expected_roi"] for a in stn_assignments), 2),
-            })
+            station_results.append(
+                {
+                    "station": stn,
+                    "division": STATION_TO_DIVISION.get(stn, "Unassigned"),
+                    "officers_allocated": stn_n_officers,
+                    "assignments": len(stn_assignments),
+                    "roads_covered": len({a["road_name"] for a in stn_assignments}),
+                    "total_roi": round(sum(a["expected_roi"] for a in stn_assignments), 2),
+                }
+            )
 
         # Division-level summary
         div_summary = {}
@@ -771,7 +847,7 @@ class EngineStore:
             "proportional": proportional,
             "total_assignments": len(all_assignments),
             "total_roi": round(sum(a["expected_roi"] for a in all_assignments), 2),
-            "unique_roads": len(set(a["road_name"] for a in all_assignments)),
+            "unique_roads": len({a["road_name"] for a in all_assignments}),
             "division_summary": div_summary,
             "station_results": station_results,
             "assignments": all_assignments,
@@ -783,8 +859,7 @@ class EngineStore:
         if "cluster_id" in self.violations.columns:
             clustered = self.violations[self.violations["cluster_id"] >= 0]
             clusters = (
-                clustered
-                .groupby("cluster_id")
+                clustered.groupby("cluster_id")
                 .agg(
                     n_violations=("id", "count"),
                     mean_pis=("pis", "mean"),
@@ -796,18 +871,20 @@ class EngineStore:
                     min_lon=("longitude", "min"),
                     max_lon=("longitude", "max"),
                     top_road=("road_name", lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else ""),
-                ).reset_index()
+                )
+                .reset_index()
             )
             # Compute radius in meters (approximate)
             clusters["radius_m"] = (
-                ((clusters["max_lat"] - clusters["min_lat"]) ** 2 +
-                 (clusters["max_lon"] - clusters["min_lon"]) ** 2) ** 0.5
-                * 111_000 / 2  # degrees → meters, halved for radius
+                ((clusters["max_lat"] - clusters["min_lat"]) ** 2 + (clusters["max_lon"] - clusters["min_lon"]) ** 2)
+                ** 0.5
+                * 111_000
+                / 2  # degrees → meters, halved for radius
             )
             self.clusters = clusters.sort_values("total_pis", ascending=False)
         else:
             self.clusters = pd.DataFrame()
-        logger.info(f"  Clusters: {len(self.clusters)}")
+        logger.info("  Clusters: %d", len(self.clusters))
 
     def get_clusters(self, top_n: int = 30) -> list[dict]:
         """Return top clusters (cached after first call)."""
@@ -840,17 +917,15 @@ class EngineStore:
                 violations=("id", "count"),
                 mean_pis=("pis", "mean"),
                 total_pis=("pis", "sum"),
-            ).reset_index()
+            )
+            .reset_index()
             .sort_values("total_pis", ascending=False)
             .head(15)
         )
         road_breakdown = road_groups.to_dict("records")
 
         # Road names list (for What-If bridging)
-        road_names = [
-            r for r in cluster_viols["road_name"].unique()
-            if r and r != "Unnamed"
-        ]
+        road_names = [r for r in cluster_viols["road_name"].unique() if r and r != "Unnamed"]
 
         # Hourly profile
         hourly = cluster_viols.groupby("hour_ist").size().to_dict()
@@ -861,8 +936,14 @@ class EngineStore:
         vehicle_types = {str(k): int(v) for k, v in vehicle_types.items()}
 
         # Severity stats
-        mean_severity = float(cluster_viols["violation_severity"].mean()) if "violation_severity" in cluster_viols.columns else 0.0
-        mean_capacity = float(cluster_viols["capacity_blocked_pct"].mean()) if "capacity_blocked_pct" in cluster_viols.columns else 0.0
+        mean_severity = (
+            float(cluster_viols["violation_severity"].mean()) if "violation_severity" in cluster_viols.columns else 0.0
+        )
+        mean_capacity = (
+            float(cluster_viols["capacity_blocked_pct"].mean())
+            if "capacity_blocked_pct" in cluster_viols.columns
+            else 0.0
+        )
 
         return {
             **{k: (v.item() if hasattr(v, "item") else v) for k, v in summary.items()},
@@ -883,17 +964,13 @@ class EngineStore:
         affected = int((s["impact_gbm"] > 0.01).sum())
         total_impact = float(s["impact_gbm"].sum())
 
-        top_roads = (
-            v[v["road_name"] != "Unnamed"]
-            .groupby("road_name")["pis"].sum()
-            .nlargest(10)
-        )
+        top_roads = v[v["road_name"] != "Unnamed"].groupby("road_name")["pis"].sum().nlargest(10)
 
         # Hourly distribution
         hourly = v.groupby("hour_ist").size().to_dict()
 
         # Enforcement gap
-        gap_hours = [h for h in range(15, 21)]
+        gap_hours = list(range(15, 21))
         gap_violations = int(v[v["hour_ist"].isin(gap_hours)].shape[0])
 
         self.overview = {
@@ -903,10 +980,7 @@ class EngineStore:
             "total_impact": round(total_impact, 1),
             "baseline_impact": round(self.baseline_impact, 1),
             "estimated_cost_crore_per_day": round(total_impact * 0.0015, 1),
-            "top_roads": [
-                {"name": name, "total_pis": round(float(pis), 1)}
-                for name, pis in top_roads.items()
-            ],
+            "top_roads": [{"name": name, "total_pis": round(float(pis), 1)} for name, pis in top_roads.items()],
             "hourly_distribution": {int(k): int(v) for k, v in hourly.items()},
             "enforcement_gap": {
                 "hours": gap_hours,
@@ -916,7 +990,7 @@ class EngineStore:
             "unique_roads": int(v["road_name"].nunique()),
             "pct_car": round(100 * (v["vehicle_type_clean"] == "CAR").mean(), 1),
         }
-        logger.info(f"  Overview computed ✅")
+        logger.info("  Overview computed ✅")
 
     # ── Insights Engine ───────────────────────────────────────
 
@@ -933,17 +1007,23 @@ class EngineStore:
 
         # ── 1. Congestion Cost ──
         cost_cr = ov["estimated_cost_crore_per_day"]
-        findings.append({
-            "id": "congestion_cost",
-            "category": "impact",
-            "title": "Daily Congestion Cost from Parking Violations",
-            "value": f"₹{cost_cr}Cr",
-            "detail": f"Digital Twin simulation on {len(s):,} road segments estimates parking violations add ₹{cost_cr} crore/day in congestion costs to Bengaluru traffic.",
-            "source": "Digital Twin Simulation (Frank-Wolfe UE)",
-            "severity": "critical",
-            "link_page": "/",
-            "link_params": "",
-        })
+        findings.append(
+            {
+                "id": "congestion_cost",
+                "category": "impact",
+                "title": "Daily Congestion Cost from Parking Violations",
+                "value": f"₹{cost_cr}Cr",
+                "detail": (
+                    f"Digital Twin simulation on {len(s):,} road segments estimates"
+                    f" parking violations add \u20b9{cost_cr} crore/day in congestion"
+                    f" costs to Bengaluru traffic."
+                ),
+                "source": "Digital Twin Simulation (Frank-Wolfe UE)",
+                "severity": "critical",
+                "link_page": "/",
+                "link_params": "",
+            }
+        )
 
         # ── 2. Pareto Analysis ──
         sorted_pis = v["pis"].sort_values(ascending=False)
@@ -952,17 +1032,23 @@ class EngineStore:
         threshold_80 = total_pis * 0.8
         n_80 = int((cumsum <= threshold_80).sum()) + 1
         pct_80 = round(100 * n_80 / len(v), 1)
-        findings.append({
-            "id": "pareto",
-            "category": "impact",
-            "title": f"{pct_80}% of Violations Cause 80% of Impact",
-            "value": f"{pct_80}%",
-            "detail": f"Pareto analysis reveals {n_80:,} out of {len(v):,} violations are responsible for 80% of congestion impact. Targeted enforcement on these alone would be transformative.",
-            "source": "Parking Impact Score (PIS) Analysis",
-            "severity": "warning",
-            "link_page": "/map",
-            "link_params": "min_impact=0.5",
-        })
+        findings.append(
+            {
+                "id": "pareto",
+                "category": "impact",
+                "title": f"{pct_80}% of Violations Cause 80% of Impact",
+                "value": f"{pct_80}%",
+                "detail": (
+                    f"Pareto analysis reveals {n_80:,} out of {len(v):,} violations"
+                    f" are responsible for 80% of congestion impact. Targeted"
+                    f" enforcement on these alone would be transformative."
+                ),
+                "source": "Parking Impact Score (PIS) Analysis",
+                "severity": "warning",
+                "link_page": "/map",
+                "link_params": "min_impact=0.5",
+            }
+        )
 
         # ── 3. Enforcement Gap ──
         gap = ov["enforcement_gap"]
@@ -972,48 +1058,69 @@ class EngineStore:
         gap_roads = v[v["hour_ist"].isin(gap_h)]["road_name"].unique()
         gap_impact_segments = s[s["road_name"].isin(gap_roads)]["impact_gbm"].sum()
         gap_impact_pct = round(100 * gap_impact_segments / max(float(s["impact_gbm"].sum()), 1), 1)
-        findings.append({
-            "id": "enforcement_gap",
-            "category": "enforcement",
-            "title": f"Evening Peak: Zero Officers During {gap['hours'][0]}:00-{gap['hours'][-1]+1}:00",
-            "value": f"{gap_pct}%",
-            "detail": f"Only {gap_pct}% of violations are caught during {gap['hours'][0]}:00-{gap['hours'][-1]+1}:00, yet roads active in this window account for {gap_impact_pct}% of total congestion impact. Currently ZERO officers deployed during this peak window.",
-            "source": "Counterfactual What-If Engine",
-            "severity": "critical",
-            "link_page": "/whatif",
-            "link_params": "",
-        })
+        findings.append(
+            {
+                "id": "enforcement_gap",
+                "category": "enforcement",
+                "title": f"Evening Peak: Zero Officers During {gap['hours'][0]}:00-{gap['hours'][-1] + 1}:00",
+                "value": f"{gap_pct}%",
+                "detail": (
+                    f"Only {gap_pct}% of violations are caught during"
+                    f" {gap['hours'][0]}:00-{gap['hours'][-1] + 1}:00,"
+                    f" yet roads active in this window account for"
+                    f" {gap_impact_pct}% of total congestion impact."
+                    f" Currently ZERO officers deployed during this peak window."
+                ),
+                "source": "Counterfactual What-If Engine",
+                "severity": "critical",
+                "link_page": "/whatif",
+                "link_params": "",
+            }
+        )
 
         # ── 4. Top Road Concentration ──
         top5_roads = ov["top_roads"][:5]
         top5_pis = sum(r["total_pis"] for r in top5_roads)
         top5_pct = round(100 * top5_pis / max(total_pis, 1), 1)
         top5_names = [r["name"] for r in top5_roads]
-        findings.append({
-            "id": "top_roads",
-            "category": "impact",
-            "title": f"Top 5 Roads = {top5_pct}% of Total Impact",
-            "value": f"{top5_pct}%",
-            "detail": f"Just 5 roads ({', '.join(top5_names[:3])}...) account for {top5_pct}% of all congestion impact. Enforcing these alone yields outsized returns.",
-            "source": "PIS Aggregation by Road",
-            "severity": "warning",
-            "link_page": "/whatif",
-            "link_params": f"roads={','.join(top5_names)}",
-        })
+        findings.append(
+            {
+                "id": "top_roads",
+                "category": "impact",
+                "title": f"Top 5 Roads = {top5_pct}% of Total Impact",
+                "value": f"{top5_pct}%",
+                "detail": (
+                    f"Just 5 roads ({', '.join(top5_names[:3])}...)"
+                    f" account for {top5_pct}% of all congestion impact."
+                    f" Enforcing these alone yields outsized returns."
+                ),
+                "source": "PIS Aggregation by Road",
+                "severity": "warning",
+                "link_page": "/whatif",
+                "link_params": f"roads={','.join(top5_names)}",
+            }
+        )
 
         # ── 5. Risk Model Performance ──
         if not self.risk_df.empty:
-            findings.append({
-                "id": "risk_model",
-                "category": "risk",
-                "title": "Risk Prediction: r = 0.92",
-                "value": "r=0.92",
-                "detail": f"HistGBM model predicts hourly violation risk with Spearman r=0.92 across {len(self.risk_df):,} road-hour predictions. Tested 27 model configurations including feature ablation and blending.",
-                "source": "Risk Forecaster (27 Experiments)",
-                "severity": "success",
-                "link_page": "/risk",
-                "link_params": "",
-            })
+            findings.append(
+                {
+                    "id": "risk_model",
+                    "category": "risk",
+                    "title": "Risk Prediction: r = 0.92",
+                    "value": "r=0.92",
+                    "detail": (
+                        f"HistGBM model predicts hourly violation risk with"
+                        f" Spearman r=0.92 across {len(self.risk_df):,}"
+                        f" road-hour predictions. Tested 27 model"
+                        f" configurations including feature ablation and blending."
+                    ),
+                    "source": "Risk Forecaster (27 Experiments)",
+                    "severity": "success",
+                    "link_page": "/risk",
+                    "link_params": "",
+                }
+            )
 
         # ── 6. Cluster Concentration ──
         if len(self.clusters) > 0:
@@ -1021,34 +1128,51 @@ class EngineStore:
             n_clusters = len(self.clusters)
             cluster_viols = int(self.clusters["n_violations"].sum())
             cluster_pct = round(100 * cluster_viols / max(len(v), 1), 1)
-            findings.append({
-                "id": "clusters",
-                "category": "enforcement",
-                "title": f"{n_clusters} Hotspot Clusters = {cluster_pct}% of Violations",
-                "value": str(n_clusters),
-                "detail": f"HDBSCAN detected {n_clusters} spatial clusters containing {cluster_viols:,} violations ({cluster_pct}% of total). Largest cluster: {top_cluster['top_road']} with {int(top_cluster['n_violations']):,} violations.",
-                "source": "HDBSCAN Spatial Clustering",
-                "severity": "info",
-                "link_page": "/clusters",
-                "link_params": "",
-            })
+            findings.append(
+                {
+                    "id": "clusters",
+                    "category": "enforcement",
+                    "title": f"{n_clusters} Hotspot Clusters = {cluster_pct}% of Violations",
+                    "value": str(n_clusters),
+                    "detail": (
+                        f"HDBSCAN detected {n_clusters} spatial clusters"
+                        f" containing {cluster_viols:,} violations"
+                        f" ({cluster_pct}% of total). Largest cluster:"
+                        f" {top_cluster['top_road']} with"
+                        f" {int(top_cluster['n_violations']):,} violations."
+                    ),
+                    "source": "HDBSCAN Spatial Clustering",
+                    "severity": "info",
+                    "link_page": "/clusters",
+                    "link_params": "",
+                }
+            )
 
         # ── 7. Data Bias (Cold-Start) ──
         hourly = v.groupby("hour_ist").size()
         peak_hour = int(hourly.idxmax())
         trough_hour = int(hourly.idxmin())
         ratio = round(float(hourly.max() / max(hourly.min(), 1)), 1)
-        findings.append({
-            "id": "data_bias",
-            "category": "bias",
-            "title": f"Cold-Start Bias: {ratio}× Variance Between Hours",
-            "value": f"{ratio}×",
-            "detail": f"Hour {peak_hour}:00 has {int(hourly.max()):,} violations while hour {trough_hour}:00 has only {int(hourly.min()):,} — a {ratio}× difference. This reflects officer deployment patterns, not actual violation rates. DRISHTAM detects and flags this feedback loop.",
-            "source": "Enforcement Data Bias Analysis",
-            "severity": "warning",
-            "link_page": "/insights",
-            "link_params": "",
-        })
+        findings.append(
+            {
+                "id": "data_bias",
+                "category": "bias",
+                "title": f"Cold-Start Bias: {ratio}× Variance Between Hours",
+                "value": f"{ratio}×",
+                "detail": (
+                    f"Hour {peak_hour}:00 has {int(hourly.max()):,} violations"
+                    f" while hour {trough_hour}:00 has only"
+                    f" {int(hourly.min()):,} — a {ratio}\u00d7 difference."
+                    f" This reflects officer deployment patterns, not actual"
+                    f" violation rates. DRISHTAM detects and flags this"
+                    f" feedback loop."
+                ),
+                "source": "Enforcement Data Bias Analysis",
+                "severity": "warning",
+                "link_page": "/insights",
+                "link_params": "",
+            }
+        )
 
         # ── 8. Station Concentration ──
         stations_list = self.get_stations()
@@ -1058,38 +1182,51 @@ class EngineStore:
             top5_viols = sum(stn["violations"] for stn in top5_stns)
             total_viols = sum(stn["violations"] for stn in stations_list)
             top5_pct = round(100 * top5_viols / max(total_viols, 1), 1)
-            findings.append({
-                "id": "station_concentration",
-                "category": "enforcement",
-                "title": f"Top 5 Stations Account for {top5_pct}% of Violations",
-                "value": f"{top5_pct}%",
-                "detail": f"The 5 busiest stations ({', '.join(s['station_name'] for s in top5_stns)}) handle {top5_pct}% of all recorded violations. Prioritizing these jurisdictions would maximize enforcement ROI.",
-                "source": "Station Jurisdiction Aggregation",
-                "severity": "warning",
-                "link_page": "/stations",
-                "link_params": "",
-            })
+            findings.append(
+                {
+                    "id": "station_concentration",
+                    "category": "enforcement",
+                    "title": f"Top 5 Stations Account for {top5_pct}% of Violations",
+                    "value": f"{top5_pct}%",
+                    "detail": (
+                        f"The 5 busiest stations"
+                        f" ({', '.join(stn['station_name'] for stn in top5_stns)})"
+                        f" handle {top5_pct}% of all recorded violations."
+                        f" Prioritizing these jurisdictions would maximize"
+                        f" enforcement ROI."
+                    ),
+                    "source": "Station Jurisdiction Aggregation",
+                    "severity": "warning",
+                    "link_page": "/stations",
+                    "link_params": "",
+                }
+            )
 
         # ── 8. Vehicle Type Insight ──
         vtype_counts = v["vehicle_type_clean"].value_counts()
         top_vehicle = str(vtype_counts.index[0])
         top_vehicle_pct = round(100 * vtype_counts.iloc[0] / len(v), 1)
         top_vehicle_pis = round(float(v[v["vehicle_type_clean"] == top_vehicle]["pis"].mean()), 1)
-        findings.append({
-            "id": "vehicle_type",
-            "category": "impact",
-            "title": f"{top_vehicle}: {top_vehicle_pct}% of Violations",
-            "value": f"{top_vehicle_pct}%",
-            "detail": f"{top_vehicle} accounts for {top_vehicle_pct}% of all violations with mean PIS of {top_vehicle_pis}. Vehicle-specific enforcement strategies could improve targeting.",
-            "source": "Vehicle Type Analysis",
-            "severity": "info",
-            "link_page": "",
-            "link_params": "",
-        })
+        findings.append(
+            {
+                "id": "vehicle_type",
+                "category": "impact",
+                "title": f"{top_vehicle}: {top_vehicle_pct}% of Violations",
+                "value": f"{top_vehicle_pct}%",
+                "detail": (
+                    f"{top_vehicle} accounts for {top_vehicle_pct}% of all"
+                    f" violations with mean PIS of {top_vehicle_pis}."
+                    f" Vehicle-specific enforcement strategies could"
+                    f" improve targeting."
+                ),
+                "source": "Vehicle Type Analysis",
+                "severity": "info",
+                "link_page": "",
+                "link_params": "",
+            }
+        )
 
         # ── Data Quality Scorecard ──
-        named_roads = v[v["road_name"] != "Unnamed"]["road_name"].nunique()
-        total_roads = v["road_name"].nunique()
         missing_pct = round(100 * (v["road_name"] == "Unnamed").mean(), 1)
         segs_with_viols = int((s["violation_count"] > 0).sum())
         hours_covered = int(v["hour_ist"].nunique())
@@ -1108,24 +1245,94 @@ class EngineStore:
 
         # ── Experiment Log ──
         experiments = [
-            {"name": "GBM-36D (Impact)", "model_type": "LightGBM", "features": 36, "metric": "spearman_r", "score": 0.59, "rank": 1},
-            {"name": "MLP-36D (Impact)", "model_type": "Neural Network", "features": 36, "metric": "spearman_r", "score": 0.55, "rank": 2},
-            {"name": "Ensemble (Impact)", "model_type": "GBM+MLP Blend", "features": 36, "metric": "spearman_r", "score": 0.58, "rank": 3},
-            {"name": "HistGBM-16F (Risk)", "model_type": "HistGradientBoosting", "features": 16, "metric": "spearman_r", "score": 0.92, "rank": 1},
-            {"name": "XGBoost-16F (Risk)", "model_type": "XGBoost", "features": 16, "metric": "spearman_r", "score": 0.91, "rank": 2},
-            {"name": "Ridge-16F (Risk)", "model_type": "Ridge Regression", "features": 16, "metric": "spearman_r", "score": 0.88, "rank": 3},
-            {"name": "RandomForest-16F", "model_type": "Random Forest", "features": 16, "metric": "spearman_r", "score": 0.90, "rank": 4},
-            {"name": "GBM-8F Ablation", "model_type": "LightGBM", "features": 8, "metric": "spearman_r", "score": 0.85, "rank": 5},
+            {
+                "name": "GBM-36D (Impact)",
+                "model_type": "LightGBM",
+                "features": 36,
+                "metric": "spearman_r",
+                "score": 0.59,
+                "rank": 1,
+            },
+            {
+                "name": "MLP-36D (Impact)",
+                "model_type": "Neural Network",
+                "features": 36,
+                "metric": "spearman_r",
+                "score": 0.55,
+                "rank": 2,
+            },
+            {
+                "name": "Ensemble (Impact)",
+                "model_type": "GBM+MLP Blend",
+                "features": 36,
+                "metric": "spearman_r",
+                "score": 0.58,
+                "rank": 3,
+            },
+            {
+                "name": "HistGBM-16F (Risk)",
+                "model_type": "HistGradientBoosting",
+                "features": 16,
+                "metric": "spearman_r",
+                "score": 0.92,
+                "rank": 1,
+            },
+            {
+                "name": "XGBoost-16F (Risk)",
+                "model_type": "XGBoost",
+                "features": 16,
+                "metric": "spearman_r",
+                "score": 0.91,
+                "rank": 2,
+            },
+            {
+                "name": "Ridge-16F (Risk)",
+                "model_type": "Ridge Regression",
+                "features": 16,
+                "metric": "spearman_r",
+                "score": 0.88,
+                "rank": 3,
+            },
+            {
+                "name": "RandomForest-16F",
+                "model_type": "Random Forest",
+                "features": 16,
+                "metric": "spearman_r",
+                "score": 0.90,
+                "rank": 4,
+            },
+            {
+                "name": "GBM-8F Ablation",
+                "model_type": "LightGBM",
+                "features": 8,
+                "metric": "spearman_r",
+                "score": 0.85,
+                "rank": 5,
+            },
         ]
 
         # ── Methodology ──
         methodology = {
-            "data": f"{len(v):,} parking violations (Jan-May 2025), {len(s):,} OSM road segments, {self.features.shape[1]} engineered features.",
-            "engine_1": f"GBM-36D trained on Digital Twin simulation labels. Spearman r=0.59. Top features: betweenness x tier interaction, violation count, capacity blocked.",
-            "engine_2": f"Counterfactual estimation by zeroing violation features and re-predicting with GBM. Baseline impact: {self.baseline_impact:.0f}.",
-            "engine_3": f"HistGBM forecaster with 16 features. 27 experiments across 7 model types. Best: r=0.92.",
-            "optimizer": "Greedy allocation with diminishing returns. Expected ROI = P(violation) x Impact x Reduction.",
-            "clusters": f"HDBSCAN with min_cluster_size=50. Detected {len(self.clusters)} spatial clusters.",
+            "data": (
+                f"{len(v):,} parking violations (Jan-May 2025),"
+                f" {len(s):,} OSM road segments,"
+                f" {self.features.shape[1]} engineered features."
+            ),
+            "engine_1": (
+                "GBM-36D trained on Digital Twin simulation labels."
+                " Spearman r=0.59. Top features: betweenness x tier"
+                " interaction, violation count, capacity blocked."
+            ),
+            "engine_2": (
+                f"Counterfactual estimation by zeroing violation"
+                f" features and re-predicting with GBM."
+                f" Baseline impact: {self.baseline_impact:.0f}."
+            ),
+            "engine_3": ("HistGBM forecaster with 16 features. 27 experiments across 7 model types. Best: r=0.92."),
+            "optimizer": (
+                "Greedy allocation with diminishing returns. Expected ROI = P(violation) x Impact x Reduction."
+            ),
+            "clusters": (f"HDBSCAN with min_cluster_size=50. Detected {len(self.clusters)} spatial clusters."),
         }
 
         result = {

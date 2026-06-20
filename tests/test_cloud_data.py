@@ -17,10 +17,12 @@ class TestConstants:
 
     def test_gcs_base_url_format(self):
         from api.cloud_data import GCS_BASE_URL
+
         assert GCS_BASE_URL.startswith("https://storage.googleapis.com/")
 
     def test_required_files_defined(self):
         from api.cloud_data import REQUIRED_FILES
+
         assert len(REQUIRED_FILES) > 0
         # Check expected files
         file_names = [f[0] for f in REQUIRED_FILES]
@@ -29,6 +31,7 @@ class TestConstants:
 
     def test_required_files_have_sizes(self):
         from api.cloud_data import REQUIRED_FILES
+
         for rel_path, size in REQUIRED_FILES:
             assert isinstance(rel_path, str)
             assert isinstance(size, int)
@@ -40,12 +43,14 @@ class TestDefaultCacheDir:
 
     def test_default_returns_path(self):
         from api.cloud_data import _default_cache_dir
+
         result = _default_cache_dir()
         assert isinstance(result, Path)
 
     @patch.dict(os.environ, {"DRISHTAM_CACHE_DIR": "/custom/cache"})
     def test_env_override(self):
         from api.cloud_data import _default_cache_dir
+
         result = _default_cache_dir()
         assert result == Path("/custom/cache")
 
@@ -54,6 +59,7 @@ class TestDefaultCacheDir:
         env.pop("DRISHTAM_CACHE_DIR", None)
         with patch.dict(os.environ, env, clear=True):
             from api.cloud_data import _default_cache_dir
+
             result = _default_cache_dir()
             assert ".cache" in str(result) or "drishtam" in str(result)
 
@@ -63,10 +69,12 @@ class TestFileOk:
 
     def test_missing_file(self):
         from api.cloud_data import _file_ok
+
         assert _file_ok(Path("/nonexistent/file.txt"), 100) is False
 
     def test_existing_file_correct_size(self):
         from api.cloud_data import _file_ok
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b"hello world")
             f.flush()
@@ -78,6 +86,7 @@ class TestFileOk:
 
     def test_existing_file_wrong_size(self):
         from api.cloud_data import _file_ok
+
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b"hello")
             f.flush()
@@ -93,6 +102,7 @@ class TestDownloadFile:
 
     def test_download_creates_parent_dirs(self):
         from api.cloud_data import _download_file
+
         with tempfile.TemporaryDirectory() as tmpdir:
             target = Path(tmpdir) / "subdir" / "nested" / "file.parquet"
             with patch("urllib.request.urlretrieve") as mock_ret:
@@ -100,12 +110,14 @@ class TestDownloadFile:
                 def fake_download(url, path):
                     Path(path).write_bytes(b"x" * 100)
                     return (path, {})
+
                 mock_ret.side_effect = fake_download
                 _download_file("https://example.com/file.parquet", target, 100)
                 assert target.exists()
 
     def test_download_cleans_up_on_failure(self):
         from api.cloud_data import _download_file
+
         with tempfile.TemporaryDirectory() as tmpdir:
             target = Path(tmpdir) / "fail.parquet"
             with patch("urllib.request.urlretrieve", side_effect=Exception("Network error")):
@@ -119,30 +131,31 @@ class TestEnsureDataDownloaded:
     @patch.dict(os.environ, {"DRISHTAM_DATA_DIR": "/fake/project"})
     def test_local_override(self):
         from api.cloud_data import ensure_data_downloaded
+
         data_dir, models_dir = ensure_data_downloaded()
         assert data_dir == Path("/fake/project/data")
         assert models_dir == Path("/fake/project/models")
 
     def test_all_cached_skips_download(self):
         from api.cloud_data import ensure_data_downloaded
+
         env = os.environ.copy()
         env.pop("DRISHTAM_DATA_DIR", None)
-        with patch.dict(os.environ, env, clear=True):
-            with patch("api.cloud_data._file_ok", return_value=True):
-                with patch("api.cloud_data._default_cache_dir") as mock_cache:
-                    mock_cache.return_value = Path("/fake/cache")
-                    data_dir, models_dir = ensure_data_downloaded()
-                    assert data_dir == Path("/fake/cache/data")
-                    assert models_dir == Path("/fake/cache/models")
+        with patch.dict(os.environ, env, clear=True), patch("api.cloud_data._file_ok", return_value=True):
+            with patch("api.cloud_data._default_cache_dir") as mock_cache:
+                mock_cache.return_value = Path("/fake/cache")
+                data_dir, models_dir = ensure_data_downloaded()
+                assert data_dir == Path("/fake/cache/data")
+                assert models_dir == Path("/fake/cache/models")
 
     def test_missing_files_triggers_download(self):
         from api.cloud_data import ensure_data_downloaded
+
         env = os.environ.copy()
         env.pop("DRISHTAM_DATA_DIR", None)
-        with patch.dict(os.environ, env, clear=True):
-            with patch("api.cloud_data._file_ok", return_value=False):
-                with patch("api.cloud_data._default_cache_dir") as mock_cache:
-                    mock_cache.return_value = Path("/fake/cache")
-                    with patch("api.cloud_data._download_file") as mock_dl:
-                        data_dir, models_dir = ensure_data_downloaded()
-                        assert mock_dl.call_count > 0
+        with patch.dict(os.environ, env, clear=True), patch("api.cloud_data._file_ok", return_value=False):
+            with patch("api.cloud_data._default_cache_dir") as mock_cache:
+                mock_cache.return_value = Path("/fake/cache")
+                with patch("api.cloud_data._download_file") as mock_dl:
+                    data_dir, models_dir = ensure_data_downloaded()
+                    assert mock_dl.call_count > 0

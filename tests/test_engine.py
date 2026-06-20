@@ -126,9 +126,7 @@ class TestEngineStoreOptimizer:
     def test_run_optimize_by_station_single(self, mock_engines):
         if len(mock_engines.stations) > 0:
             station_name = mock_engines.stations.iloc[0]["station_name"]
-            result = mock_engines.run_optimize_by_station(
-                n_officers=5, station=station_name
-            )
+            result = mock_engines.run_optimize_by_station(n_officers=5, station=station_name)
             assert "total_assignments" in result
 
     def test_run_optimize_by_station_division(self, mock_engines):
@@ -136,17 +134,13 @@ class TestEngineStoreOptimizer:
         assert "division_summary" in result
 
     def test_run_optimize_by_station_proportional(self, mock_engines):
-        result = mock_engines.run_optimize_by_station(
-            n_officers=20, proportional=True
-        )
+        result = mock_engines.run_optimize_by_station(n_officers=20, proportional=True)
         assert "station_results" in result
 
     def test_run_optimize_by_station_custom_allocation(self, mock_engines):
         if len(mock_engines.stations) > 0:
             station_name = mock_engines.stations.iloc[0]["station_name"]
-            result = mock_engines.run_optimize_by_station(
-                custom_allocation={station_name: 5}
-            )
+            result = mock_engines.run_optimize_by_station(custom_allocation={station_name: 5})
             assert "total_assignments" in result
 
 
@@ -236,17 +230,13 @@ class TestEngineStoreEdgeCases:
 
     def test_whatif_with_seg_indices(self, mock_engines):
         """Test the seg_indices_input branch of run_whatif."""
-        result = mock_engines.run_whatif(
-            road_names=[], seg_indices_input=[0, 1, 2]
-        )
+        result = mock_engines.run_whatif(road_names=[], seg_indices_input=[0, 1, 2])
         assert "segments_affected" in result
         assert result["segments_affected"] > 0
 
     def test_whatif_with_invalid_seg_indices(self, mock_engines):
         """seg_indices that don't match any seg_idx should return 0."""
-        result = mock_engines.run_whatif(
-            road_names=[], seg_indices_input=[999999]
-        )
+        result = mock_engines.run_whatif(road_names=[], seg_indices_input=[999999])
         assert result["segments_affected"] == 0
 
     def test_get_segment_with_pis_breakdown(self, mock_engines):
@@ -260,7 +250,7 @@ class TestEngineStoreEdgeCases:
     def test_get_segment_with_unknown_road(self, mock_engines):
         """Segment whose road isn't in hourly_counts."""
         # Temporarily modify a segment's road to something unknown
-        import pandas as pd
+
         original = mock_engines.segments.loc[0, "road_name"]
         mock_engines.segments.loc[0, "road_name"] = "ZZZZZZZ_Unknown"
         seg = mock_engines.get_segment(0)
@@ -305,14 +295,10 @@ class TestEngineStoreEdgeCases:
 
     def test_optimize_station_no_viols(self, mock_engines):
         """Optimizing for a station with no violations."""
-        result = mock_engines.run_optimize_by_station(
-            n_officers=5, station="NonExistent_Station_ZZZ"
-        )
+        result = mock_engines.run_optimize_by_station(n_officers=5, station="NonExistent_Station_ZZZ")
         assert "error" in result
 
     def test_optimize_station_equal_distribution(self, mock_engines):
         """Test non-proportional (equal) distribution."""
-        result = mock_engines.run_optimize_by_station(
-            n_officers=10, proportional=False
-        )
+        result = mock_engines.run_optimize_by_station(n_officers=10, proportional=False)
         assert "total_assignments" in result
