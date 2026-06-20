@@ -1,9 +1,9 @@
-# Phase 3: Graph Neural Network & Congestion Propagation
+# Phase 3: Graph Neural Network & Congestion Propagation ✅ COMPLETE
 
 > **Goal**: Model how parking-induced congestion propagates through the road network  
 > **Inputs**: `violations_enriched.parquet` (with PIS), OSM road graph  
-> **Outputs**: Trained GAT model, propagated impact scores for entire network, propagation visualizations  
-> **Dependencies**: Phase 2 complete (PIS scores available)
+> **Outputs**: GBM-36D model (r=0.59), Digital Twin simulation (2M vehicle-hours/day)  
+> **Status**: ✅ COMPLETE — GBM outperformed GNN (r=0.59 vs r=0.24)
 
 ---
 

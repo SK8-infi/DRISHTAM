@@ -32,6 +32,10 @@ RESEARCH_DIR = PROJECT_ROOT / "research"
 MODELS_DIR = DATA_DIR / "models"
 EXPORT_DIR = DATA_DIR / "export"
 
+# Phase 3 paths
+GRAPH_DATA_PATH = DATA_DIR / "road_graph.pt"
+PROPAGATED_SCORES_PATH = DATA_DIR / "propagated_impact.parquet"
+
 # =============================================================================
 # BENGALURU BOUNDING BOX
 # =============================================================================
@@ -273,6 +277,108 @@ WEIGHT_CONFIGS: dict[str, dict[str, float]] = {
         "severity": 1 / 6,
     },
 }
+
+# =============================================================================
+# TRAFFIC SIMULATION — DIGITAL TWIN (Phase 3B)
+# =============================================================================
+
+# BPR Volume-Delay Function parameters (standard values)
+BPR_ALPHA = 0.15
+BPR_BETA = 4.0
+
+# IRC capacity standards (PCU/hour per lane) — practical urban capacity
+# Reference: IRC: 106-1990, adjusted for Indian mixed-traffic conditions
+ROAD_CAPACITY_PCU_PER_LANE: dict[str, int] = {
+    "motorway": 1800,
+    "motorway_link": 1400,
+    "trunk": 1500,
+    "trunk_link": 1200,
+    "primary": 1400,
+    "primary_link": 1100,
+    "secondary": 1200,
+    "secondary_link": 1000,
+    "tertiary": 1000,
+    "tertiary_link": 800,
+    "residential": 800,
+    "living_street": 400,
+    "unclassified": 800,
+    "service": 400,
+}
+DEFAULT_CAPACITY_PCU_PER_LANE = 800
+
+# Free-flow speed (km/h) by road type — Indian urban conditions
+ROAD_FREE_FLOW_SPEED: dict[str, float] = {
+    "motorway": 80.0,
+    "motorway_link": 50.0,
+    "trunk": 50.0,
+    "trunk_link": 40.0,
+    "primary": 40.0,
+    "primary_link": 35.0,
+    "secondary": 35.0,
+    "secondary_link": 30.0,
+    "tertiary": 30.0,
+    "tertiary_link": 25.0,
+    "residential": 25.0,
+    "living_street": 15.0,
+    "unclassified": 25.0,
+    "service": 15.0,
+}
+DEFAULT_FREE_FLOW_SPEED = 25.0
+
+# PCU conversion factors (IRC: 106-1990)
+PCU_FACTORS: dict[str, float] = {
+    "CAR": 1.0,
+    "SCOOTER": 0.5,
+    "MOTOR CYCLE": 0.5,
+    "MOPED": 0.5,
+    "PASSENGER AUTO": 1.2,
+    "MAXI-CAB": 2.0,
+    "LGV": 2.0,
+    "HGV": 2.5,
+    "TRACTOR": 3.0,
+    "AMBULANCE": 1.5,
+    "OMNI BUS": 3.0,
+}
+
+# Frank-Wolfe assignment parameters
+FW_MAX_ITERATIONS = 30  # 30 iters gives gap ~0.03-0.05 (standard in practice)
+FW_CONVERGENCE_GAP = 0.01  # Relative gap threshold
+FW_MIN_STEP_SIZE = 1e-6
+
+# Simulation time periods (24 hours)
+SIMULATION_HOURS = list(range(24))
+
+# Gravity model friction parameter
+GRAVITY_BETA = 0.0005  # Decay rate for distance (per second of travel time)
+
+# Demand multiplier: With 350+ zones (80 landmark + 270+ auto), we capture
+# most trip generation. 1.2× adds marginal unmodeled demand.
+# Reduced from 2.0 to avoid unrealistic overloading (1.1M PCU/hr at midday).
+DEMAND_MULTIPLIER = 1.2
+
+# Background flow: represents local/non-zone trips that don't originate
+# from our zone centroids (grocery runs, school drops, through-traffic).
+# Applied as a fraction of each link's capacity, scaled by temporal profile.
+BACKGROUND_FLOW_FRACTION = 0.15  # At peak, each link gets 15% of capacity as background
+BACKGROUND_TEMPORAL_PROFILE = [
+    0.05, 0.03, 0.02, 0.02, 0.03, 0.08,  # 0-5 (night)
+    0.25, 0.55, 0.85, 1.00, 0.80, 0.65,  # 6-11 (morning peak at 9)
+    0.55, 0.50, 0.55, 0.65, 0.80, 0.95,  # 12-17 (afternoon, evening peak at 17)
+    1.00, 0.75, 0.50, 0.30, 0.15, 0.08,  # 18-23 (evening wind-down)
+]
+
+# Auto-zone generation: grid-based zone generation for demand spreading
+AUTO_ZONE_GRID_SIZE = 0.015  # ~1.7 km grid cells (in degrees)
+AUTO_ZONE_MIN_NODES = 50  # Min OSM nodes in a cell to be a zone
+AUTO_ZONE_BASE_PRODUCTION = 1500  # Base PCU/hr per zone at peak
+AUTO_ZONE_BASE_ATTRACTION = 1500  # Base PCU/hr per zone at peak
+AUTO_ZONE_DENSITY_SCALE = 150  # Extra PCU/hr per 100 nodes in cell
+
+# Simulation output paths
+SIMULATION_DIR = DATA_DIR / "simulation"
+BASELINE_FLOWS_PATH = SIMULATION_DIR / "baseline_flows.parquet"
+VIOLATION_FLOWS_PATH = SIMULATION_DIR / "violation_flows.parquet"
+DELAY_METRICS_PATH = SIMULATION_DIR / "delay_metrics.parquet"
 
 # =============================================================================
 # VISUALIZATION

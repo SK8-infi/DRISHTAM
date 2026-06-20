@@ -35,8 +35,17 @@ htmlcov/
 data/*.parquet
 data/*.pt
 data/*.graphml
-data/models/
+data/*.json
+data/simulation/
 *.csv
+
+# --- Trained Models (not in git) ---
+models/*.pkl
+models/*.npy
+models/*.npz
+models/*.pt
+models/*.parquet
+models/*.json
 
 # --- Dashboard ---
 dashboard/node_modules/
