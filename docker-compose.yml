@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     ports:
-      - "8000:8000"
+      - "8000:8080"
     environment:
       - PYTHONUNBUFFERED=1
       - DRISHTAM_ENV=production
@@ -21,11 +21,11 @@ services:
     volumes:
       - api-cache:/app/cache
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
       interval: 30s
       timeout: 10s
-      start_period: 60s
-      retries: 3
+      start_period: 120s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -39,7 +39,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_MMI_KEY=${MMI_KEY:-}
     depends_on:
       api:
